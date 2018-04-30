@@ -1,0 +1,47 @@
+#!/bin/bash -eu
+
+
+function generate_random() {
+  < /dev/urandom tr -dc A-Za-z0-9 | head -c${1:-32};echo -n
+}
+
+# need to use helm chart from dashboard repository
+identity_config="$(read_landscape_config '.charts[] | select(.name=="identity")')"
+identity_repo_path="${DASHBOARD_REPO_PATH}"
+
+# check passwords kubectlClientSecret, 
+# (generate if needed, do not overwrite)
+
+if [ ! -f "${COMPONENT_STATE_HOME}/kubectlClientSecret" ] ; then
+    kubectlClientSecret="$(read_landscape_config '.charts[] | select(.name=="identity") | .values.kubectlClientSecret')"
+    if [ -z $kubectlClientSecret -o "$kubectlClientSecret" == "null" ] ; then
+        generate_random > "${COMPONENT_STATE_HOME}/kubectlClientSecret"
+    else
+        echo -n $kubectlClientSecret > "${COMPONENT_STATE_HOME}/kubectlClientSecret"
+    fi
+fi
+
+if [ ! -f "${COMPONENT_STATE_HOME}/dashboardClientSecret" ] ; then
+    dashboardClientSecret="$(read_landscape_config '.charts[] | select(.name=="identity") | .values.dashboardClientSecret')"
+    if [ -z $dashboardClientSecret -o "$dashboardClientSecret" == "null" ] ; then
+        generate_random > "${COMPONENT_STATE_HOME}/dashboardClientSecret"
+    else
+        echo -n $dashboardClientSecret > "${COMPONENT_STATE_HOME}/dashboardClientSecret"
+    fi
+fi
+
+
+# render identity helm chart values
+python generate-values.py \
+  --tls-crt-path="$LANDSCAPE_STATE_HOME/cert/tls.crt" \
+  --tls-key-path="$LANDSCAPE_STATE_HOME/cert/tls.key" \
+  > "$COMPONENT_STATE_HOME/values.yaml"
+
+# install or upgrade identity
+helm upgrade --install \
+  --force \
+  --wait \
+  --values "$COMPONENT_STATE_HOME/values.yaml" \
+  --namespace kube-system \
+  identity \
+  "$identity_repo_path/$(jq -r '.path' <<< "$identity_config")"

@@ -1,0 +1,175 @@
+#!/bin/bash -eu
+
+# source common environment and functions
+source "$(dirname "$0")/common"
+
+# show help
+function show_help() {
+  cat << EOF
+
+  TODO: help goes here
+EOF
+  exit 0
+}
+
+# workaround for Ubuntu 14.04 jumpboxes where a modern realpath is missing that supports the
+# --relative-to option; this workaround assumes the base_path to be an absolute canonical path
+function realpath_relative_to() {
+  local base_path="$1"
+  local path="$2"
+  [[ "$base_path" != */ ]] && base_path="$base_path/"
+  [[ "$path" != */ ]] && path="$path/"
+  local rel_path="${path#$base_path}"
+  if [[ "$rel_path" == "$path" ]]; then
+    echo "..." # we don't need to know exactly how far we are outside
+  elif [[ "$rel_path" == "" ]]; then
+    echo "."
+  else
+    rel_path="${rel_path%/}"
+    echo "${rel_path#./}"
+  fi
+}
+
+# calculate paths
+function calc_paths() {
+  # find out in which component the user currently is
+  landscape_rel_path="$(realpath_relative_to "$LANDSCAPE_HOME" "$(pwd)")"
+  if [[ $landscape_rel_path == ..* ]]; then
+    # we are outside the landscape
+    fail "You are outside of a landscape folder!"
+  elif [[ $landscape_rel_path == export/* ]] || [[ $landscape_rel_path == state/* ]]; then
+    # we are within a component in the landscape instance structure
+    component_rel_path="${landscape_rel_path#*/}"
+  elif [[ $landscape_rel_path == setup/components/* ]]; then
+    # we are within a component in the landscape setup structure
+    component_rel_path="${landscape_rel_path#*/*/}"
+  else
+    # we are within the landscape, but in no apparent component, so let's take them all
+    component_rel_path="."
+  fi
+
+  # traverse the landscape setup hierarchy up until we hit a proper component root
+  while [[ ! $component_rel_path == "." ]]; do
+    if [[ -f "$LANDSCAPE_COMPONENTS_HOME/$component_rel_path/deploy" ]]; then
+      break
+    fi
+    component_rel_path="$(dirname $component_rel_path)"
+  done
+
+  # ok, we are set
+  local relsuf=""
+  if [[ "$component_rel_path" != . ]]; then
+    relsuf="/$component_rel_path"
+  fi
+  COMPONENT_EXPORT_HOME="$LANDSCAPE_EXPORT_HOME$relsuf"
+  COMPONENT_STATE_HOME="$LANDSCAPE_STATE_HOME$relsuf"
+  COMPONENT_TEMPLATE_HOME="$LANDSCAPE_COMPONENTS_HOME$relsuf"
+}
+
+# call deploy script
+function call_deploy() {
+  # check that there is a deploy script
+  if [[ ! -f "$COMPONENT_TEMPLATE_HOME/deploy" ]]; then
+    fail "No deploy script available in $COMPONENT_TEMPLATE_HOME!"
+  fi
+
+  # create export and state folders which may be missing initially
+  mkdir -p "$COMPONENT_EXPORT_HOME"
+  mkdir -p "$COMPONENT_STATE_HOME"
+
+  # call the deploy script (in its own folder)
+  echo -e "┌───────────"
+  echo -e "│ Component: $(color inverse_cyan $(realpath_relative_to "$LANDSCAPE_COMPONENTS_HOME" "$COMPONENT_TEMPLATE_HOME"))"
+  echo -e "│      Exec: $(color light_gray $(realpath_relative_to "$LANDSCAPE_HOME" "$COMPONENT_TEMPLATE_HOME")/deploy) $(color blue "$@")"
+# echo -e "│    Export: $(color light_gray $(realpath_relative_to "$LANDSCAPE_HOME" "$COMPONENT_EXPORT_HOME"))"
+# echo -e "│     State: $(color light_gray $(realpath_relative_to "$LANDSCAPE_HOME" "$COMPONENT_STATE_HOME"))"
+  echo -e "└───────────"
+  pushd "$COMPONENT_TEMPLATE_HOME" 1> /dev/null
+  export COMPONENT_EXPORT_HOME
+  export COMPONENT_STATE_HOME
+  export COMPONENT_TEMPLATE_HOME
+  source ./deploy "$@"
+  popd 1> /dev/null
+}
+
+# delegate to sub component deploy script
+function delegate_deploy() {
+  sub_component_rel_path="$1"
+
+  # push current environment to stack
+  stack_push component_export_home_stack "$COMPONENT_EXPORT_HOME"
+  stack_push component_state_home_stack "$COMPONENT_STATE_HOME"
+  stack_push component_template_home_stack "$COMPONENT_TEMPLATE_HOME"
+
+  # compute new environment
+  COMPONENT_EXPORT_HOME="$COMPONENT_EXPORT_HOME/$sub_component_rel_path"
+  COMPONENT_STATE_HOME="$COMPONENT_STATE_HOME/$sub_component_rel_path"
+  COMPONENT_TEMPLATE_HOME="$COMPONENT_TEMPLATE_HOME/$sub_component_rel_path"
+
+  # delegate
+  call_deploy "${@:2}"
+
+  # pop former environment from stack
+  stack_pop component_export_home_stack COMPONENT_EXPORT_HOME
+  stack_pop component_state_home_stack COMPONENT_STATE_HOME
+  stack_pop component_template_home_stack COMPONENT_TEMPLATE_HOME
+}
+
+# handle exit
+function trap_handler() {
+  result=$?
+  trap - HUP INT QUIT PIPE TERM EXIT
+  unset COMPONENT_EXPORT_HOME
+  unset COMPONENT_STATE_HOME
+  unset COMPONENT_TEMPLATE_HOME
+  stack_destroy component_export_home_stack
+  stack_destroy component_state_home_stack
+  stack_destroy component_template_home_stack
+  cd $return_path
+  if [[ $result -eq 0 ]]; then
+    echo -e "\n$(ok SUCCESS:) Completed successfully at $(date +"%Y-%m-%dT%T")." && exit 0
+  elif [[ $result -eq 100 ]]; then
+    echo -e "\n$(warning FAILURE:) Aborted at $(date +"%Y-%m-%dT%T")." && exit 1
+  else
+    echo -e "\n$(error FAILURE:) Failed at $(date +"%Y-%m-%dT%T") with exit code $result." && exit $result
+  fi
+}
+
+# show help if requested
+set +u
+if [[ $1 == "-h" ]] || [[ $1 == "--help" ]]; then
+  show_help
+fi
+set -u
+
+# install trap handler for exit handling
+return_path="$(pwd)"
+trap "exit 100" HUP INT QUIT PIPE TERM && trap trap_handler EXIT
+
+# check whether user has requested a specific component
+if [[ -n "${1:-}" ]]; then
+  if [[ -d "$1" ]]; then
+     cd "$1"
+  else
+    if [[ ! -d "$LANDSCAPE_HOME/setup/components/$1" ]]; then
+      fail "Component $1 not found!"
+    fi
+    cd "$LANDSCAPE_HOME/setup/components/$1"
+  fi
+  if [[ ! -f deploy ]]; then
+    fail "Component $1 has no deploy script!"
+  fi
+fi
+
+# determine active cluster (in case we have blue/green gardens and soils)
+export LANDSCAPE_ACTIVE_CLUSTER_NAME="$(read_landscape_config .clusters.active)"
+export LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH="$(determine_active_cluster_repo_path)"
+
+# prepare call stacks for deploy delegation
+stack_new component_export_home_stack
+stack_new component_state_home_stack
+stack_new component_template_home_stack
+
+# find and call deploy script
+calc_paths
+call_deploy "$@"

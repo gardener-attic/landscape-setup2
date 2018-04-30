@@ -1,0 +1,24 @@
+<%
+import os, yaml, sys
+# import our utility library
+sys.path.insert(0, os.path.join(os.environ["LANDSCAPE_SCRIPTS_HOME"], "lib"))
+import utils
+
+config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
+email=utils.find_by_key_value(config["charts"], "name", "certmanager")["email"]
+%>
+apiVersion: certmanager.k8s.io/v1alpha1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt
+spec:
+  acme:
+    # The ACME server URL
+    server: https://acme-v01.api.letsencrypt.org/directory
+    # Email address used for ACME registration
+    email: ${email}
+    # Name of a secret used to store the ACME account private key
+    privateKeySecretRef:
+      name: letsencrypt
+    # Enable the HTTP-01 challenge provider
+    http01: {}

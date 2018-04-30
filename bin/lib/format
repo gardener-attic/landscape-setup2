@@ -1,0 +1,49 @@
+#!/bin/bash -eu
+
+# show warning message and abort execution
+function abort() {
+  warning "$@"
+  exit 100 # suggested exit code (to be used by trap handler to detect abortion if implemented)
+}
+
+# show error message and fail execution
+function fail() {
+  error "$@"
+  exit 1 # default exit code
+}
+
+# alignment echo functions
+function left() {
+  local width="${1}"
+  local text="${@:2}"
+  printf "%-${width}s" "${text}"
+}
+
+function right() {
+  local width="${1}"
+  local text="${@:2}"
+  printf "%+${width}s" "${text}"
+}
+
+function center() {
+  local width="${1}"
+  local text="${@:2}"
+  local text_wo_escape_chars="$(echo ${text} | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[m|K]//g")"
+  local pre_padding=$(((${width}-${#text_wo_escape_chars})/2))
+  local post_padding=$((${width}-${#text_wo_escape_chars}-${pre_padding}))
+  printf "%*.*s%s%*.*s" ${pre_padding} ${pre_padding} " " "${text}" ${post_padding} ${post_padding} " "
+}
+
+# line
+line() {
+  local width="${1}"
+  local char="${2:- }"
+  printf "%${width}s" | sed -r "s/ /$char/g"
+}
+
+# ruler
+function hr() {
+  local width="${1:-80}"
+  local char="${2:--}"
+  debug "\n$(line "$width" "$char")\n"
+}

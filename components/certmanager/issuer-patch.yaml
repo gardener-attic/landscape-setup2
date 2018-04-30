@@ -1,0 +1,3 @@
+metadata:
+  annotations:
+    certmanager.k8s.io/cluster-issuer: letsencrypt

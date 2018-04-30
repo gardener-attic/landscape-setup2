@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+python generate-values.py > "$COMPONENT_STATE_HOME/csr.json"
+
+if [ ! -f "$COMPONENT_STATE_HOME/ca-config.json" ] ; then
+    cp "${COMPONENT_TEMPLATE_HOME}/ca-config.json" "$COMPONENT_STATE_HOME/ca-config.json"
+fi
+
+if [ ! -f ${COMPONENT_STATE_HOME}/tls.crt ] ; then
+    cfssl gencert -ca=${KUBIFY_STATE_PATH}/gen/assets/tls/ca.crt -ca-key=${KUBIFY_STATE_PATH}/gen/assets/tls/ca.key -config=${COMPONENT_STATE_HOME}/ca-config.json -profile=server ${COMPONENT_STATE_HOME}/csr.json | cfssljson -bare server
+    mv ${COMPONENT_TEMPLATE_HOME}/server-key.pem ${COMPONENT_STATE_HOME}/tls.key
+    cat ${COMPONENT_TEMPLATE_HOME}/server.pem ${KUBIFY_STATE_PATH}/gen/assets/tls/ca.crt >${COMPONENT_STATE_HOME}/tls.crt
+    rm ${COMPONENT_TEMPLATE_HOME}/server.pem
+    mv ${COMPONENT_TEMPLATE_HOME}/server.csr ${COMPONENT_STATE_HOME}/tls.csr
+fi

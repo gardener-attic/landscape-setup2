@@ -1,0 +1,42 @@
+#!/bin/bash -e
+
+# run terraform in the context of a component deploy
+function terraform_apply() {
+  # get var and state file locations (use sensible defaults)
+  var_file="${1:-$COMPONENT_STATE_HOME/variables.tfvars}"
+  state_file="${2:-$COMPONENT_STATE_HOME/terraform.tfstate}"
+
+  # init terraform
+  terraform init
+
+  # check whether interactive mode is required
+  if interactive; then
+    # check if there is something to do
+    set +e
+    terraform plan -detailed-exitcode -var-file="$var_file" -state="$state_file"
+    return_code="$?"
+    set -e
+    case $return_code in
+      0)
+        # no changes
+        return
+        ;;
+      1)
+        # terraform had or saw issues
+        exit 1
+        ;;
+      2)
+        # found changes
+        read -p "Do you want to apply the terraform plan (y/n)? " response
+        [[ ! "$response" =~ ^(yes|y) ]] && abort "Aborted."
+        ;;
+      *)
+        # we don't understand terraform's response
+        fail "Terraform return code $return_code not understood!"
+        ;;
+    esac
+  fi
+
+  # run terraform
+  terraform apply -auto-approve -var-file="$var_file" -state="$state_file"
+}

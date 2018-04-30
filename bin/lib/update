@@ -1,0 +1,22 @@
+#!/bin/bash -eu
+
+# pull latest version of the landscape instance
+echo "Updating landscape instance from git..."
+(
+  cd "$LANDSCAPE_HOME"
+  git pull --ff-only
+  git submodule update --init --recursive
+)
+
+# activate potential changes from upstream
+echo "Activating potential changes from upstream..."
+current="$LANDSCAPE_HOME"
+source "$current/setup/scripts/deactivate"
+source "$current/setup/scripts/activate"
+unset current
+
+# update tools unless explicitly instructed not to
+if [[ ! "$TOOLS" == "false" ]]; then
+  echo "Installing tools..."
+  TOOLS=true deploy tools
+fi

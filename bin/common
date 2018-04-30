@@ -1,0 +1,73 @@
+#!/bin/bash
+
+# source color functions
+source "$LANDSCAPE_SCRIPTS_HOME/lib/colors"
+
+# source bash stack
+source "$LANDSCAPE_SCRIPTS_HOME/lib/stack"
+
+# source terraform convenience functions
+source "$LANDSCAPE_SCRIPTS_HOME/lib/terraform"
+
+# output warning message and abort execution
+function abort() {
+  echo -e "$(warning "$@")"
+  exit 100 # exit code used by trap handler to detect abortion
+}
+
+# output error message and fail execution
+function fail() {
+  echo -e "$(error "$@")"
+  exit 1
+}
+
+# read from landscape configuration (jq expression expected as single/first parameter)
+function read_landscape_config {
+  PARSED_LANDSCAPE_CONFIG="${PARSED_LANDSCAPE_CONFIG:-}"
+  PARSED_LANDSCAPE_CONFIG_CONTENT="${PARSED_LANDSCAPE_CONFIG_CONTENT:-}"
+  # make sure we have/fetch the right landscape configuration
+  if [[ -z "$PARSED_LANDSCAPE_CONFIG" ]] || [[ -z "$PARSED_LANDSCAPE_CONFIG_CONTENT" ]] || \
+     [[ "$PARSED_LANDSCAPE_CONFIG" != "$LANDSCAPE_CONFIG" ]]; then
+     PARSED_LANDSCAPE_CONFIG_CONTENT="$(yaml2json < $LANDSCAPE_CONFIG)"
+     PARSED_LANDSCAPE_CONFIG="${LANDSCAPE_CONFIG:-}"
+  fi
+  echo "$PARSED_LANDSCAPE_CONFIG_CONTENT" | jq -r "$1"
+}
+
+# check whether we are in headless or interactive mode
+function headless() {
+  option="${HEADLESS:-false}"
+  if $option; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function interactive() {
+  ! headless
+}
+
+# lookup command in non wrapper path
+function lookup_command() {
+  PATH="${SETUP_NON_WRAPPED_PATH/:.:/:}" which "$1" || fail "Command $1 not found!"
+}
+
+# determine active cluster repo path
+function determine_active_cluster_repo_path() {
+  echo ${KUBIFY_STATE_PATH}
+}
+
+# clone a git repository ($1) to a path ($2) and checkout given tag/sha ($3) (or master)
+function clone_repository() {
+  repo_name="${1##*/}"
+  rm -rf "$2" 1> /dev/null
+  if [[ -z "$3" ]]; then
+    git clone "$1" "$2"
+  else
+    git clone --no-checkout "$1" "$2"
+    pushd "$2" 1> /dev/null
+    git checkout "$3"
+    popd 1> /dev/null
+  fi
+}

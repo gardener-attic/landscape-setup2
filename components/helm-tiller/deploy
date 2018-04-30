@@ -1,0 +1,26 @@
+#!/bin/bash -eu
+
+# initialize helm
+kubectl -n kube-system get serviceaccount tiller || \
+  kubectl -n kube-system create serviceaccount tiller
+kubectl get clusterrolebinding tiller || \
+  kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+helm init --upgrade --service-account tiller
+
+# wait until helm/tiller to become available
+max_retry_time=300
+retry_stop=$(($(date +%s) + max_retry_time))
+success=false
+set +e
+while [[ $(date +%s) -lt $retry_stop ]]; do
+  sleep 1
+  if echo helm version &> /dev/null; then
+    success=true
+    break;
+  fi
+  echo -e "$(debug Helm Tiller is not yet available/ready. Waiting...)"
+done
+set -e
+if ! $success; then
+  fail "Helm Tiller did not become available/ready within $max_retry_time seconds!"
+fi

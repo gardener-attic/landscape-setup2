@@ -1,0 +1,32 @@
+#!/bin/bash -eu
+
+# render issuer file
+mako-render ${COMPONENT_TEMPLATE_HOME}/cert-manager-issuer.yaml.tmpl >${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+
+# install certificate manger
+helm upgrade --install \
+  --force \
+  --wait \
+  --namespace \
+  certmanager cert-manager stable/cert-manager
+
+# install certificate manager issuer
+kubectl apply -f ${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+
+# remove existing certificates (they will not be overwritten)
+
+kubectl -n garden delete secret gardener-dashboard-tls
+kubectl -n kube-system delete secret identity-tls  
+
+# patch dashboard and ingress 
+dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+if [ "$dashboard_issuer" != "letsencrypt" ] ; then
+    kubectl -n garden patch ingress gardener-dashboard-ingress \
+         -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
+fi
+
+identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+if [ "$identity_issuer" != "letsencrypt" ] ; then
+    kubectl -n kube-system patch ingress identity-ingress \
+         -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
+fi

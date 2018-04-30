@@ -1,0 +1,16 @@
+{
+    "CN": "gardener-apiserver.garden.svc.cluster.local",
+    "hosts": [
+        "gardener-apiserver",
+        "gardener-apiserver.garden",
+        "gardener-apiserver.garden.svc",
+        "gardener-apiserver.garden.svc.cluster",
+        "gardener-apiserver.garden.svc.cluster.local"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+    ]
+}

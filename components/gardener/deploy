@@ -1,0 +1,51 @@
+#!/bin/bash
+
+
+# generate Gardener API server TLS certificate if not yet done
+path_tls="$COMPONENT_TEMPLATE_HOME/tls"
+cert_names="gardener-apiserver"
+if [[ ! -f "$COMPONENT_STATE_HOME/tls/$cert_names-tls.pem" ]]; then
+  mkdir -p "$COMPONENT_STATE_HOME/tls"
+  cfssl gencert \
+    -profile=server \
+    -ca="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.crt" \
+    -ca-key="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.key" \
+    -config="$path_tls/ca-config.json" \
+    "$path_tls/gardener-apiserver-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
+fi
+
+# render gardener helm chart values
+python generate-values.py \
+  --gardener-repo-path="$GARDENER_REPO_PATH" \
+  --etcd-server="$(kubectl -n kube-system get svc etcd-service -o jsonpath --template={.spec.clusterIP}:{.spec.ports[0].port})" \
+  > "$COMPONENT_STATE_HOME/values.yaml"
+
+kubectl config view
+kubectl config current-context 
+
+gardener_config="$(read_landscape_config .charts[0])"
+
+# install or upgrade gardener
+helm upgrade --install \
+  --force \
+  --wait \
+  --values "$COMPONENT_STATE_HOME/values.yaml" \
+  --namespace garden \
+  gardener \
+  "$GARDENER_REPO_PATH/$(jq -r '.path' <<< "$gardener_config")"
+
+# wait for api server extension to become available
+max_retry_time=300
+retry_stop=$(($(date +%s) + max_retry_time))
+success=false
+while [[ $(date +%s) -lt $retry_stop ]]; do
+  sleep 1
+  if kubectl get shoots &> /dev/null; then
+    success=true
+    break;
+  fi
+  echo -e "$(debug Gardener API server not yet reachable. Waiting...)"
+done
+if ! $success; then
+  fail "Gardener API server did not become reachable within $max_retry_time seconds!"
+fi

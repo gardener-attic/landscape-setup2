@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# check whether the landscape was already deactivated
+[[ -z "$LANDSCAPE_HOME" ]] && return 0
+
+# deactivate virtual env
+deactivate &> /dev/null || true
+unset VIRTUAL_ENV_DISABLE_PROMPT
+if [[ -n "$SETUP_PRE_VIRTUAL_ENV_PROMPT" ]]; then # make sure it's idempotent
+  export VIRTUAL_ENV_DISABLE_PROMPT="$SETUP_PRE_VIRTUAL_ENV_PROMPT"
+fi
+unset SETUP_PRE_VIRTUAL_ENV_PROMPT
+
+# reset path
+if [[ -n "$SETUP_PRE_SOURCING_PATH" ]]; then # make sure it's idempotent
+  export PATH="$SETUP_PRE_SOURCING_PATH"
+fi
+unset SETUP_PRE_SOURCING_PATH
+unset SETUP_NON_WRAPPED_PATH
+
+# forget shell functions
+unset update
+unset upgrade
+
+# forget landscape home and other env vars
+landscape_name="$LANDSCAPE_NAME"
+unset LANDSCAPE_HOME
+unset LANDSCAPE_NAME
+unset LANDSCAPE_CONFIG
+unset LANDSCAPE_EXPORT_HOME
+unset LANDSCAPE_STATE_HOME
+unset LANDSCAPE_COMPONENTS_HOME
+unset LANDSCAPE_SCRIPTS_HOME
+
+# inform user
+echo "Landscape $landscape_name deactivated."
+unset landscape_name
