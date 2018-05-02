@@ -1,5 +1,4 @@
 #!/bin/bash -e
-
 # stack implementation
 # by Brian Clapper: https://github.com/bmc
 # web blog: http://brizzled.clapper.org/blog/2011/10/28/a-bash-stack/
