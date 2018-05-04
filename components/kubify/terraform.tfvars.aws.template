@@ -1,80 +1,41 @@
-aws_access_key = "<% context.write(str(context.get('authentication.aws_access_key'))) %>"
+<%namespace file="functions.template" import="*"/>
+aws_access_key = ${attr("authentication.aws_access_key")}
 
-aws_secret_key = "<% context.write(str(context.get('authentication.aws_secret_key'))) %>"
+aws_secret_key = ${attr("authentication.aws_secret_key")}
 
-aws_region = "<% context.write(str(context.get('authentication.aws_region'))) %>"
+aws_region = ${attr("authentication.aws_region")}
 
-aws_availability_zone = "<% context.write(str(context.get('authentication.aws_availability_zone'))) %>"
+aws_availability_zone = ${attr("authentication.aws_availability_zone")}
 
-cluster_name = "<% context.write(str(context.get('clusters.name'))) %>"
+cluster_name = ${attr("clusters.name")}
 
-cluster_type = "<% context.write(str(context.get('clusters.type'))) %>"
+cluster_type = ${attr("clusters.type")}
 
-oidc_issuer_subdomain = "<% context.write(str(context.get('misc.oidc_issuer_subdomain'))) %>"
+${attr("misc", outerBrackets=False, without=["aws_kube2iam_roles", "deploy_tiller", "oidc_use_cluster_ca"])}
+deploy_tiller = ${attr("misc.deploy_tiller", quotes=False)}
+oidc_use_cluster_ca = ${attr("misc.oidc_use_cluster_ca", quotes=False)}
 
-oidc_client_id = "<% context.write(str(context.get('misc.oidc_client_id'))) %>"
-
-oidc_username_claim = "<% context.write(str(context.get('misc.oidc_username_claim'))) %>"
-
-oidc_groups_claim = "<% context.write(str(context.get('misc.oidc_groups_claim'))) %>"
-
-oidc_use_cluster_ca = true
-
-subnet_cidr = "<% context.write(str(context.get('misc.subnet_cidr'))) %>"
-
-service_cidr = "<% context.write(str(context.get('misc.service_cidr'))) %>"
-
-pod_cidr = "<% context.write(str(context.get('misc.pod_cidr'))) %>"
-
-aws_vpc_cidr = "<% context.write(str(context.get('misc.vpc_cidr'))) %>"
-
-versions = {
-  image_name = "<% context.write(str(context.get('versions.image_name'))) %>"
-  etcd_version = "<% context.write(str(context.get('versions.etcd_version'))) %>"
-}
+versions = ${attr("versions")}
 
 # DNS
-dns = {
-  domain_name = "<% context.write(str(context.get('clusters.dns.domain_name'))) %>"
-  dns_type = "<% context.write(str(context.get('clusters.dns.dns_type'))) %>"
-  hosted_zone_id = "<% context.write(str(context.get('clusters.dns.hosted_zone_id'))) %>"
-  access_key = "<% context.write(str(context.get('clusters.dns.access_key'))) %>"
-  secret_key = "<% context.write(str(context.get('clusters.dns.secret_key'))) %>"
-}
+dns = ${attr("clusters.dns")}
 
 # cluster size
-master = {
-  count = <% context.write(str(context.get('clusters.master.count'))) %>
-  volume_size = <% context.write(str(context.get('clusters.master.volume_size'))) %>
-}
+master = ${attr("clusters.master", quotes=False)}
 
-worker = {
-  count = <% context.write(str(context.get('clusters.worker.count'))) %>
-  volume_size = <% context.write(str(context.get('clusters.worker.volume_size'))) %>
-}
+worker = ${attr("clusters.worker", quotes=False)}
 
-etcd_backup = {
-  storage_type = "<% context.write(str(context.get('etcd_backup.storage_type'))) %>"
-  region = "<% context.write(str(context.get('etcd_backup.region'))) %>"
-}
+etcd_backup = ${attr("etcd_backup")}
 
-addons = {
-  dashboard = {
-    app_name = "<% context.write(str(context.get('addons.dashboard.app_name'))) %>"
-  }
-  heapster = <% context.write(str(context.get('addons.heapster'))) %>
-  nginx-ingress = <% context.write(str(context.get('addons.nginx-ingress'))) %>
-}
-
-dashboard_creds = "<% context.write(str(context.get('misc.dashboard_creds'))) %>"
+addons = ${attr("addons")}
 
 aws_kube2iam_roles = [
   {
-    name = "<% context.write(str(context.get('misc.aws_kube2iam_roles.#0.name'))) %>"
-    description = "<% context.write(str(context.get('misc.aws_kube2iam_roles.#0.description'))) %>"
+    name = ${attr("misc.aws_kube2iam_roles.#0.name")}
+    description = ${attr("misc.aws_kube2iam_roles.#0.description")}
 
     policy = <<EOF
-<% context.write(str(context.get('misc.aws_kube2iam_roles.#0.policy'))) %>
+${attr("misc.aws_kube2iam_roles.#0.policy", quotes=False)}
 EOF
   }
 ]

@@ -1,0 +1,70 @@
+## Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##      http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+
+<%def name="tab(count=1)"><%
+return count*"  "
+%></%def>
+
+<%def name="attr(pos, indent=0, quotes=True, outerBrackets=True, without=[])"><%
+p = pos.split(".")
+elem = context.get("yaml_map")
+for part in p:
+    if part[0] == "#": # descend into list
+        part = int(part[1:])
+    elem = elem[part]
+printAttr(elem, indent=indent, quotes=quotes, outerBrackets=outerBrackets, without=without)
+%></%def>
+
+<%def name="printAttr(elem, suffix='', indent=0, quotes=True, inline=False, outerBrackets=True, without=[])"><%
+if elem is None:
+    pass #TODO
+elif isinstance(elem, dict):
+    printAttrDict(elem, indent=indent, quotes=quotes, inline=inline, outerBrackets=outerBrackets, without=without)
+    context.write(suffix)
+elif isinstance(elem, list):
+    printAttrList(elem, indent=indent, quotes=quotes, inline=inline, outerBrackets=outerBrackets)
+    context.write(suffix)
+else: # elem should be text
+    if quotes:
+        elem = "\"{}\"".format(elem)
+    if not inline:
+        elem = "{}{}".format(tab(indent), elem)
+    context.write(str(elem))
+    context.write(suffix)
+%></%def>
+
+<%def name="printAttrDict(elem, indent=0, quotes=True, inline=False, outerBrackets=True, without=[])"><%
+if outerBrackets:
+    context.write("{}{{\n".format(tab(indent) if not inline else ""))
+    indent = indent + 1
+for k, v in elem.iteritems():
+    if not k in without:
+        context.write("{}{} = ".format(tab(indent), k))
+        printAttr(v, suffix="\n", indent=indent, quotes=quotes, inline=True)
+if outerBrackets:
+    indent = indent - 1
+    context.write("{}}}".format(tab(indent)))
+%></%def>
+
+<%def name="printAttrList(elem, indent=0, quotes=True, inline=False, outerBrackets=True)"><%
+if outerBrackets:
+    context.write("{}[\n".format(tab(indent) if not inline else ""))
+    indent = indent + 1
+for e in elem[:-1]:
+    printAttr(e, suffix=",\n", indent=indent, quotes=quotes)
+printAttr(elem[-1], suffix="\n", indent=indent, quotes=quotes)
+if outerBrackets:
+    indent = indent - 1
+    context.write("{}]".format(tab(indent)))
+%></%def>

@@ -11,11 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import yaml
 from mako.template import Template
+from mako.lookup import TemplateLookup
 import collections
 from sys import argv
-from os import path, environ
+from os import path
 
 
 '''
@@ -50,26 +52,10 @@ def removeVariantNodes(data):
             data.update(tmp[1])
 
 
-def flatten(d, parent_key='', sep='_'):
-    items = []
-    for k, v in d.items():
-        new_key = parent_key + sep + k if parent_key else k
-        if isinstance(v, dict) and v:
-            items.extend(flatten(v, new_key, sep=sep).items())
-        elif isinstance(v, list) and not isinstance(v, basestring):
-            for ind in range(len(v)):
-                new_key = "{}{}#{}".format(new_key, sep, ind)
-                if isinstance(v[ind], dict):
-                    items.extend(flatten(v[ind], new_key, sep=sep).items())
-                else:
-                    items.append((new_key, v[ind]))
-        else:
-            items.append((new_key, v))
-    return dict(items)
-
 kubifyStatePath = argv[1]
 landscapeConfig = argv[2]
 kubifyHome = argv[3]
+landscapeHome = argv[4]
 
 y = yaml.load(open(landscapeConfig))
 
@@ -79,17 +65,17 @@ vname = open(path.join(kubifyStatePath, "variant_name.tmp"), 'w')
 vname.write(variant)
 vname.close()
 
-#print("Filling template for variant {}...".format(variant))
+print("Filling template for variant {}...".format(variant))
 removeVariantNodes(y)
-tmp = y
-y = flatten(y, sep='.')
-y['yaml_map'] = tmp # add the non-flattened map to y for better searching
-terraformTemplate = Template(filename=path.join(kubifyHome, 'terraform.tfvars.{}.template'.format(variant)))
-filledTemplate = terraformTemplate.render(**y)
+ym = dict()
+ym['yaml_map'] = y
+templateLookup = TemplateLookup(directories=[kubifyHome])
+terraformTemplate = templateLookup.get_template(path.join(kubifyHome, '/terraform.tfvars.{}.template'.format(variant)))
+filledTemplate = terraformTemplate.render(**ym)
 print(filledTemplate)
 
 #print("Writing terraform.tfvars ...")
-tfvars = open(path.join(environ["LANDSCAPE_HOME"], "terraform.tfvars"), 'w')
+tfvars = open(path.join(landscapeHome, "terraform.tfvars"), 'w')
 tfvars.write(filledTemplate)
 tfvars.close()
 #print("Generation of terraform.tfvars finished!")
