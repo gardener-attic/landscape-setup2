@@ -11,9 +11,10 @@ cluster_name = ${attr("clusters.name")}
 
 cluster_type = ${attr("clusters.type")}
 
-${attr("misc", outerBrackets=False, without=["aws_kube2iam_roles", "deploy_tiller", "oidc_use_cluster_ca"])}
+${attr("misc", outerBrackets=False, without=["aws_kube2iam_roles", "deploy_tiller", "oidc_use_cluster_ca", "vpc_cidr"])}
 deploy_tiller = ${attr("misc.deploy_tiller", quotes=False)}
 oidc_use_cluster_ca = ${attr("misc.oidc_use_cluster_ca", quotes=False)}
+aws_vpc_cidr = ${attr("vpc_cidr")}
 
 versions = ${attr("versions")}
 
