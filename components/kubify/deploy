@@ -17,7 +17,7 @@
 mkdir -p ${KUBIFY_STATE_PATH}
 
 echo "Filling template from landscape.yaml ..."
-python $LANDSCAPE_COMPONENTS_HOME/kubify/fillTemplate.py $KUBIFY_STATE_PATH $LANDSCAPE_CONFIG $LANDSCAPE_COMPONENTS_HOME/kubify
+python $LANDSCAPE_COMPONENTS_HOME/kubify/fillTemplate.py $KUBIFY_STATE_PATH $LANDSCAPE_CONFIG $LANDSCAPE_COMPONENTS_HOME/kubify $LANDSCAPE_HOME
 
 export CLOUD_VARIANT=$(<$KUBIFY_STATE_PATH/variant_name.tmp)
 rm $KUBIFY_STATE_PATH/variant_name.tmp
