@@ -1,41 +1,87 @@
-<%namespace file="functions.template" import="*"/>
-aws_access_key = ${attr("authentication.aws_access_key")}
+<%
+import os, yaml, sys
+# import our utility library
+sys.path.insert(0, os.path.join(os.environ["LANDSCAPE_SCRIPTS_HOME"], "lib"))
+import utils
 
-aws_secret_key = ${attr("authentication.aws_secret_key")}
+config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
+profileName=config["cloud"]["variant"]
+authentication=config["authentication"]["variant_aws"]
+dns=config["clusters"]["dns"]
+addons=utils.dict_to_tfvars(config["addons"]["variant_all"])
+misc=config["misc"]["variant_all"]
+kube2iam=config["misc"]["variant_aws"]["aws_kube2iam_roles"][0]
 
-aws_region = ${attr("authentication.aws_region")}
+# write variant to temporary file
+variantfile = open("variant.tmp", 'w')
+variantfile.write(profileName)
+variantfile.close()
+%>
+aws_access_key = "${authentication["aws_access_key"]}"
 
-aws_availability_zone = ${attr("authentication.aws_availability_zone")}
+aws_secret_key = "${authentication["aws_secret_key"]}"
 
-cluster_name = ${attr("clusters.name")}
+aws_region = "${authentication["aws_region"]}"
 
-cluster_type = ${attr("clusters.type")}
+aws_availability_zone = "${authentication["aws_availability_zone"]}"
 
-${attr("misc", outerBrackets=False, without=["aws_kube2iam_roles", "deploy_tiller", "oidc_use_cluster_ca"])}
-deploy_tiller = ${attr("misc.deploy_tiller", quotes=False)}
-oidc_use_cluster_ca = ${attr("misc.oidc_use_cluster_ca", quotes=False)}
+cluster_name = "${config["clusters"]["name"]}"
 
-versions = ${attr("versions")}
+cluster_type = "${config["clusters"]["type"]}"
+
+versions = {
+  etcd_version = "${config["versions"]["variant_aws"]["etcd_version"]}"
+  image_name = "${config["versions"]["variant_aws"]["image_name"]}"
+}
 
 # DNS
-dns = ${attr("clusters.dns")}
+dns = {
+  domain_name = "${dns["domain_name"]}"
+  dns_type = "${dns["dns_type"]}"
+  hosted_zone_id = "${dns["hosted_zone_id"]}"
+  % if "access_key" in dns and dns["access_key"]:
+  access_key = "${dns["access_key"]}"
+  secret_key = "${dns["secret_key"]}"
+  % endif
+}
 
 # cluster size
-master = ${attr("clusters.master", quotes=False)}
+master = {
+  count = ${config["clusters"]["master"]["count"]}
+  volume_size = ${config["clusters"]["master"]["volume_size"]}
+}
 
-worker = ${attr("clusters.worker", quotes=False)}
+worker = {
+  count = ${config["clusters"]["worker"]["count"]}
+  volume_size = ${config["clusters"]["worker"]["volume_size"]}
+}
 
-etcd_backup = ${attr("etcd_backup")}
+etcd_backup = {
+  storage_type = "${config["etcd_backup"]["storage_type"]}"
+  region = "${config["etcd_backup"]["region"]}"
+}
 
-addons = ${attr("addons")}
+addons = ${addons}
+
+dashboard_creds = "${misc["dashboard_creds"]}"
+deploy_tiller = ${misc["deploy_tiller"]}
+oidc_issuer_subdomain = "${misc["oidc_issuer_subdomain"]}"
+oidc_client_id = "${misc["oidc_client_id"]}"
+oidc_username_claim = "${misc["oidc_username_claim"]}"
+oidc_groups_claim = "${misc["oidc_groups_claim"]}"
+oidc_use_cluster_ca = true
+subnet_cidr = "${misc["subnet_cidr"]}"
+service_cidr = "${misc["service_cidr"]}"
+pod_cidr = "${misc["pod_cidr"]}"
+aws_vpc_cidr = "${misc["vpc_cidr"]}"
 
 aws_kube2iam_roles = [
   {
-    name = ${attr("misc.aws_kube2iam_roles.#0.name")}
-    description = ${attr("misc.aws_kube2iam_roles.#0.description")}
+    name = "${kube2iam["name"]}"
+    description = "${kube2iam["description"]}"
 
     policy = <<EOF
-${attr("misc.aws_kube2iam_roles.#0.policy", quotes=False)}
+${kube2iam["policy"]}
 EOF
   }
 ]

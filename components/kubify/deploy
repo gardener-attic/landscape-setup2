@@ -17,10 +17,10 @@
 mkdir -p ${KUBIFY_STATE_PATH}
 
 echo "Filling template from landscape.yaml ..."
-python $LANDSCAPE_COMPONENTS_HOME/kubify/fillTemplate.py $KUBIFY_STATE_PATH $LANDSCAPE_CONFIG $LANDSCAPE_COMPONENTS_HOME/kubify $LANDSCAPE_HOME
+mako-render terraform.tfvars.aws.template > $LANDSCAPE_HOME/terraform.tfvars
 
-export CLOUD_VARIANT=$(<$KUBIFY_STATE_PATH/variant_name.tmp)
-rm $KUBIFY_STATE_PATH/variant_name.tmp
+export CLOUD_VARIANT=$(<variant.tmp)
+rm variant.tmp
 
 echo "Kubify prepare $CLOUD_VARIANT"
 $KUBIFY_REPO_PATH/bin/prepare $CLOUD_VARIANT
@@ -30,5 +30,5 @@ $KUBIFY_REPO_PATH/bin/apply
 
 # todo: wait until cluster  is completely running
 # kubectl get po --all-namespaces <- all pods must be running
-# add --oidc-ca-file= option 
+
 # what is this terraform directory about

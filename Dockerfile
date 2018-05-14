@@ -30,6 +30,6 @@ RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
     git clone https://github.com/yaml/pyyaml.git pyyaml && cd pyyaml && \
     python setup.py --without-libyaml install && \
     cd .. && rm -rf pyyaml && \
-    curl -O https://storage.googleapis.com/kubernetes-helm/helm-v2.7.2-linux-amd64.tar.gz && \
+    curl -O https://kubernetes-helm.storage.googleapis.com/helm-v2.8.2-linux-amd64.tar.gz && \
     tar xfv helm-*linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin && rm -rf linux-amd64 && \
     chmod 755 /usr/local/bin/*
