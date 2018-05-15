@@ -31,3 +31,17 @@ def compute_image_tag(path, tag):
 def read_file(path):
   with open(path) as f:
     return f.read().rstrip()
+
+def dict_to_tfvars(d, indent=0, inline=False):
+  tab = "  "
+  res = "{}{{\n".format(indent * tab if not inline else "")
+  indent = indent + 1
+  for k, v in d.iteritems():
+      res += "{}\"{}\" = ".format(indent * tab, k)
+      if isinstance(v, dict):
+        res += dict_to_tfvars(v, indent=indent, inline=True)
+      else:
+        res += "\"{}\"\n".format(v)
+  indent = indent - 1
+  res += "{}}}\n".format(indent * tab)
+  return res
