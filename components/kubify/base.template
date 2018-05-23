@@ -1,0 +1,10 @@
+<%
+import os, yaml, sys
+# import our utility library
+sys.path.insert(0, os.path.join(os.environ["LANDSCAPE_SCRIPTS_HOME"], "lib"))
+import utils
+
+config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
+profileName=config["cloud"]["variant"]
+%>
+<%include file="terraform.tfvars.${profileName}.template" args="config=config, profileName=profileName, utils=utils" />

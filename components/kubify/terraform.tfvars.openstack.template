@@ -1,27 +1,31 @@
 <%page args="config, profileName, utils" />
 <%
-authentication=config["authentication"]["variant_aws"]
+authentication=config["authentication"]["variant_openstack"]
 dns=config["clusters"]["dns"]
 addons=utils.dict_to_tfvars(config["addons"]["variant_all"])
-misc=config["misc"]["variant_all"]
-kube2iam=config["misc"]["variant_aws"]["aws_kube2iam_roles"][0]
+misc=config["misc"]["variant_all"].copy()
+misc.update(config["misc"]["variant_openstack"])
 %>
-aws_access_key = "${authentication["aws_access_key"]}"
+os_user_name = "${authentication["os_user_name"]}"
 
-aws_secret_key = "${authentication["aws_secret_key"]}"
+os_password = "${authentication["os_password"]}"
 
-aws_region = "${authentication["aws_region"]}"
+os_auth_url = "${authentication["os_auth_url"]}"
 
-aws_availability_zone = "${authentication["aws_availability_zone"]}"
+os_tenant_name = "${authentication["os_tenant_name"]}"
+
+os_domain_name = "${authentication["os_domain_name"]}"
+
+os_region = "${authentication["os_region"]}"
+
+os_fip_pool_name = "${misc["os_fip_pool_name"]}"
+
+os_lbaas_provider = "${misc["os_lbaas_provider"]}"
+os_az = "${authentication["os_az"]}"
 
 cluster_name = "${config["clusters"]["name"]}"
 
 cluster_type = "${config["clusters"]["type"]}"
-
-versions = {
-  etcd_version = "${config["versions"]["variant_aws"]["etcd_version"]}"
-  image_name = "${config["versions"]["variant_aws"]["image_name"]}"
-}
 
 # DNS
 dns = {
@@ -32,6 +36,11 @@ dns = {
   access_key = "${dns["access_key"]}"
   secret_key = "${dns["secret_key"]}"
   % endif
+}
+
+versions = {
+  kubernetes_version = "${config["versions"]["variant_all"]["kubernetes_version"]}"
+  image_name = "${config["versions"]["variant_openstack"]["image_name"]}"
 }
 
 # cluster size
@@ -54,6 +63,8 @@ addons = ${addons}
 
 dashboard_creds = "${misc["dashboard_creds"]}"
 deploy_tiller = ${misc["deploy_tiller"]}
+event_ttl = "${misc["event_ttl"]}"
+
 oidc_issuer_subdomain = "${misc["oidc_issuer_subdomain"]}"
 oidc_client_id = "${misc["oidc_client_id"]}"
 oidc_username_claim = "${misc["oidc_username_claim"]}"
@@ -62,15 +73,4 @@ oidc_use_cluster_ca = true
 subnet_cidr = "${misc["subnet_cidr"]}"
 service_cidr = "${misc["service_cidr"]}"
 pod_cidr = "${misc["pod_cidr"]}"
-aws_vpc_cidr = "${misc["vpc_cidr"]}"
-
-aws_kube2iam_roles = [
-  {
-    name = "${kube2iam["name"]}"
-    description = "${kube2iam["description"]}"
-
-    policy = <<EOF
-${kube2iam["policy"]}
-EOF
-  }
-]
+os_vpc_cidr = "${misc["vpc_cidr"]}"

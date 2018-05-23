@@ -17,10 +17,7 @@
 mkdir -p ${KUBIFY_STATE_PATH}
 
 echo "Filling template from landscape.yaml ..."
-mako-render terraform.tfvars.aws.template > $LANDSCAPE_HOME/terraform.tfvars
-
-export CLOUD_VARIANT=$(<variant.tmp)
-rm variant.tmp
+mako-render base.template > $LANDSCAPE_HOME/terraform.tfvars
 
 echo "Kubify prepare $CLOUD_VARIANT"
 $KUBIFY_REPO_PATH/bin/prepare $CLOUD_VARIANT

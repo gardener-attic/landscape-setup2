@@ -1,0 +1,27 @@
+<%
+import os, yaml, base64
+config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
+profileName=config["cloud"]["variant"]
+region=config["seed_config"]["region"]
+image=config["seed_config"]["image"]
+zones=config["seed_config"]["zones"]
+domain=config["clusters"]["dns"]["domain_name"]
+%>
+# Seed cluster registration manifest into which the control planes of Shoot clusters will be deployed.
+---
+apiVersion: garden.sapcloud.io/v1beta1
+kind: Seed
+metadata:
+  name: openstack
+spec:
+  cloud:
+    profile: openstack
+    region: ${region}
+  secretRef:
+    name: core-openstack
+    namespace: garden-seed
+  ingressDomain: ${"ingress" + domain}
+  networks:
+    nodes: ${config["seed_config"]["node_cidr"]}
+    pods: ${config["seed_config"]["pod_cidr"]}
+    services: ${config["seed_config"]["service_cidr"]}
