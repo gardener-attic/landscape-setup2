@@ -34,7 +34,7 @@ image_tag=utils.find_by_key_value(config["charts"], "name", "identity")["tag"]
 
 passwords=identity_config["staticPasswords"]
 connectors=[]
-if "connectors" in identity_config:
+if identity_config.get("connectors") is not None:
   connectors=identity_config["connectors"]
 
 

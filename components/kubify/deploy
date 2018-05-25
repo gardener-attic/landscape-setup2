@@ -23,9 +23,9 @@ echo "Kubify prepare $CLOUD_VARIANT"
 $KUBIFY_REPO_PATH/bin/prepare $CLOUD_VARIANT
 
 echo "Kubify apply"
-$KUBIFY_REPO_PATH/bin/apply
+$KUBIFY_REPO_PATH/bin/apply -y
 
-# todo: wait until cluster  is completely running
-# kubectl get po --all-namespaces <- all pods must be running
+# wait until cluster  is completely running
+./wait_for_cluster.sh
 
 # what is this terraform directory about
