@@ -33,7 +33,10 @@ domain=config["clusters"]["dns"]["domain_name"]
 image_tag=utils.find_by_key_value(config["charts"], "name", "identity")["tag"] 
 
 passwords=identity_config["staticPasswords"]
-connectors=identity_config["connectors"]
+connectors=[]
+if "connectors" in identity_config:
+  connectors=identity_config["connectors"]
+
 
 for entry in passwords:
     if "password" in entry:
