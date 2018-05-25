@@ -6,9 +6,9 @@ import utils
 
 config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
 profileName=config["cloud"]["variant"]
-region=config["seed_config"]["region"]
-image=config["seed_config"]["image"]
-zones=config["seed_config"]["zones"]
+region=config["seed_config"]["variant_aws"]["region"]
+image=config["seed_config"]["variant_aws"]["image"]
+zones=config["seed_config"]["variant_aws"]["zones"]
 %>
 ---
 apiVersion: garden.sapcloud.io/v1beta1

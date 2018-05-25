@@ -6,9 +6,9 @@ import utils
 
 config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
 profileName=config["cloud"]["variant"]
-region=config["seed_config"]["region"]
-image=config["seed_config"]["image"]
-zones=config["seed_config"]["zones"]
+region=config["seed_config"]["variant_openstack"]["region"]
+image=config["seed_config"]["variant_openstack"]["image"]
+zones=config["seed_config"]["variant_openstack"]["zones"]
 url=config["authentication"]["variant_openstack"]["os_auth_url"]
 os_lbaas_provider=config["misc"]["variant_openstack"]["os_lbaas_provider"]
 os_fip_pool_name=config["misc"]["variant_openstack"]["os_fip_pool_name"]
