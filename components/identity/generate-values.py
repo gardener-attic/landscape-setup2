@@ -33,6 +33,10 @@ domain=config["clusters"]["dns"]["domain_name"]
 image_tag=utils.find_by_key_value(config["charts"], "name", "identity")["tag"] 
 
 passwords=identity_config["staticPasswords"]
+connectors=[]
+if identity_config.get("connectors") is not None:
+  connectors=identity_config["connectors"]
+
 
 for entry in passwords:
     if "password" in entry:
@@ -60,7 +64,7 @@ values={
   "dashboardClientSecret": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "dashboardClientSecret")),
   "kubectlClientSecret": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "kubectlClientSecret")),
   "staticPasswords": passwords,
-  "connectors" : []
+  "connectors" : connectors
 }
 
 yaml.safe_dump(values, sys.stdout, indent=2, width=100000, default_style='\"')

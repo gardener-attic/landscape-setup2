@@ -49,6 +49,9 @@ if [ ! -d ${LANDSCAPE_STATE_HOME} ] ; then
     mkdir -p ${LANDSCAPE_STATE_HOME}
 fi
 
+# set cloud variant
+export CLOUD_VARIANT="$(yaml2json < $LANDSCAPE_CONFIG | jq -r .cloud.variant)"
+
 source ${SETUP_REPO_PATH}/bin/common
 
 echo "Environment variables configured!"
