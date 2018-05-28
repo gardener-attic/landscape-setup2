@@ -65,7 +65,8 @@ values={
       }
     },
     "defaultDomains": [],
-    "gitHub": []
+    "gitHub": [],
+    "openVPNDiffieHellmanKey": gardener_config["openVPNDiffieHellmanKey"]
 #    "alertingSMTP": gardener_config["values"]["controller"]["alertingSMTP"]
   }
 }
