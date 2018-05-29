@@ -9,7 +9,7 @@ echo "Setting up the cluster ..."
 # should already have happened
 # source setup/init.sh
 
-cd components
+pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
 
 # kubify - not yet automated
 #./deploy.sh kubify
@@ -35,5 +35,6 @@ cd components
 # certmanager - there's an extra script for that
 #./deploy.sh certmanager
 
-cd ..
+popd 1> /dev/null
+
 echo "Gardener successfully deployed!"
