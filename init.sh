@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# preserve original path
-export SETUP_NON_WRAPPED_PATH="$PATH"
-
 # landscape home is one level higher
 landscape_homet="$(readlink -f "${BASH_SOURCE[0]}")"
 landscape_homev="$(dirname ${landscape_homet})"
@@ -38,7 +35,12 @@ export LANDSCAPE_STATE_HOME="$LANDSCAPE_HOME/state"
 export LANDSCAPE_COMPONENTS_HOME="$LANDSCAPE_HOME/setup/components"
 export LANDSCAPE_EXPORT_HOME="$LANDSCAPE_HOME/export"
 
-export PATH=${SETUP_REPO_PATH}/bin:$PATH
+# only do this once!
+if [ -z $SETUP_NON_WRAPPED_PATH ]; then
+    # preserve original path
+    export SETUP_NON_WRAPPED_PATH="$PATH"
+    export PATH=${SETUP_REPO_PATH}/bin:$PATH
+fi
 
 export LANDSCAPE_NAME="$(grep -m 1 -F "domain_name:" "$LANDSCAPE_HOME/landscape.yaml" | awk '{ print $2 }')"
 
