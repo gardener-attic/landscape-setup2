@@ -44,3 +44,12 @@ if [ "$identity_issuer" != "letsencrypt" ] ; then
     kubectl -n kube-system patch ingress identity-ingress \
          -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
 fi
+
+# find position of the line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' and save the array position of that entry within the yaml to variable
+pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
+if [ $pos ]; then
+    # delete that entry
+    kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
+else
+    echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
+fi
