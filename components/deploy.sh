@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 #
 # Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 #
@@ -74,4 +74,4 @@ stack_new component_state_home_stack
 stack_new component_template_home_stack
 
 calc_paths $1
-call_deploy $1
+call_deploy $@
