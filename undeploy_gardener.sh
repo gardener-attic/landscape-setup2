@@ -14,17 +14,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall tiller
-  kubectl -n kube-system delete deployment tiller-deploy
-  kubectl delete clusterrolebinding tiller
-  kubectl -n kube-system delete serviceaccount tiller
-  kubectl -n kube-system delete service tiller-deploy
-  rm -rf $COMPONENT_STATE_HOME
-else # initialize helm
-  kubectl -n kube-system get serviceaccount tiller || \
-    kubectl -n kube-system create serviceaccount tiller
-  kubectl get clusterrolebinding tiller || \
-    kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-  helm init --upgrade --wait --service-account tiller
-fi
+echo "Removing components..."
 
+pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
+
+# dashboard 
+./deploy.sh dashboard --uninstall
+
+# identity
+./deploy.sh identity --uninstall
+
+# seed-config
+./deploy.sh seed-config --uninstall
+
+# gardener
+./deploy.sh gardener --uninstall
+
+# helm-tiller
+./deploy.sh helm-tiller --uninstall
+
+# certificates
+./deploy.sh cert --uninstall
+
+popd 1> /dev/null
+
+echo "Uninstall complete!"

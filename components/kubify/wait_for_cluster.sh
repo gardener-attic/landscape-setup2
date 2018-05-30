@@ -20,6 +20,7 @@ if [ $# -lt 1 ] || [ $1 != "-nw" -a $1 != "--no-wait" ]; then # allow skipping t
   sleep 300
 fi
 
+echo "Waiting time is up. Now trying to reach the cluster ..."
 max_retry_time=900
 retry_stop=$(($(date +%s) + max_retry_time))
 success=false
