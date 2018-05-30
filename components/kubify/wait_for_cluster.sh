@@ -16,8 +16,8 @@
 
 echo "Waiting for the cluster ..."
 if [ $# -lt 1 ] || [ $1 != "-nw" -a $1 != "--no-wait" ]; then # allow skipping the time for testing purposes
-  echo "Give the cluster some time to come up ... (waiting for 5 minutes)"
-  sleep 300
+  echo "Give the cluster some time to come up ... (waiting for 1 minute)"
+  sleep 60
 fi
 
 echo "Waiting time is up. Now trying to reach the cluster ..."
