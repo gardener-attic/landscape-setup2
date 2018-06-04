@@ -17,4 +17,4 @@
 
 # Run the docker container with interactive shell, cd to the mounted folder, and source the init.sh file
 # the "&& bash" keeps the interactive mode of the docker container alive
-docker run -it -v $(pwd)/..:/landscape -w /landscape/setup gardener_landscape bash -c "echo $'\n'\"source /landscape/setup/init.sh \"$'\n'\"source <(/usr/local/bin/kubectl completion bash) \"$'\n'\"source /etc/bash_completion\" >> ~/.bashrc && bash"
+docker run -it -v $(pwd)/..:/landscape -w /landscape/setup gardener_landscape bash -c "source /landscape/setup/init.sh && bash"

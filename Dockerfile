@@ -12,10 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# --- ATTENTION ---
-# This needs to be run with the surrounding git image mounted
-# example: docker run -it -v $(pwd):/home/gardener/ <IMAGE_NAME>
-
 FROM ubuntu:16.04
 
 RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
@@ -32,4 +28,5 @@ RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
     cd .. && rm -rf pyyaml && \
     curl -O https://kubernetes-helm.storage.googleapis.com/helm-v2.8.2-linux-amd64.tar.gz && \
     tar xfv helm-*linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin && rm -rf linux-amd64 && \
+    echo "\nsource <(/usr/local/bin/kubectl completion bash) \nsource /etc/bash_completion" >> ~/.bashrc && \
     chmod 755 /usr/local/bin/*
