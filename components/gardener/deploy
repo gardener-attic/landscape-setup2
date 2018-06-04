@@ -18,6 +18,8 @@ if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall garde
   helm delete --purge gardener
   kubectl -n garden delete statefulset prometheus
   kubectl -n garden delete service prometheus-web
+  kubectl -n garden delete secret --all
+  kubectl delete namespace garden
   rm -rf ~/.kube # clear kubectl cache to prevent error on next call
   rm -rf $COMPONENT_STATE_HOME
 else # install gardener

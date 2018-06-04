@@ -56,4 +56,9 @@ export CLOUD_VARIANT="$(yaml2json < $LANDSCAPE_CONFIG | jq -r .cloud.variant)"
 
 source ${SETUP_REPO_PATH}/bin/common
 
+# export fail function and dependencies to be available in scripts
+export -f fail
+export -f error
+export -f color
+
 echo "Environment variables configured!"
