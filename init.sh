@@ -36,7 +36,7 @@ export LANDSCAPE_COMPONENTS_HOME="$LANDSCAPE_HOME/setup/components"
 export LANDSCAPE_EXPORT_HOME="$LANDSCAPE_HOME/export"
 
 # only do this once!
-if [ -z $SETUP_NON_WRAPPED_PATH ]; then
+if [ -z ${SETUP_NON_WRAPPED_PATH:-""} ]; then
     # preserve original path
     export SETUP_NON_WRAPPED_PATH="$PATH"
     export PATH=${SETUP_REPO_PATH}/bin:$PATH
