@@ -16,9 +16,9 @@
 
 if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall tiller
   kubectl -n kube-system delete deployment tiller-deploy
-  kubectl delete clusterrolebinding tiller
-  kubectl -n kube-system delete serviceaccount tiller
-  kubectl -n kube-system delete service tiller-deploy
+  kubectl delete clusterrolebinding tiller --ignore-not-found
+  kubectl -n kube-system delete serviceaccount tiller --ignore-not-found
+  kubectl -n kube-system delete service tiller-deploy --ignore-not-found
   rm -rf $COMPONENT_STATE_HOME
 else # initialize helm
   kubectl -n kube-system get serviceaccount tiller || \

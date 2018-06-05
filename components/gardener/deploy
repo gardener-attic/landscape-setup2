@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -eu
 #
 # Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
 #
@@ -16,10 +16,10 @@
 
 if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall gardener
   helm delete --purge gardener
-  kubectl -n garden delete statefulset prometheus
-  kubectl -n garden delete service prometheus-web
-  kubectl -n garden delete secret --all
-  kubectl delete namespace garden
+  kubectl -n garden delete statefulset prometheus --ignore-not-found
+  kubectl -n garden delete service prometheus-web --ignore-not-found
+  kubectl -n garden delete secret --all --ignore-not-found
+  kubectl delete namespace garden --ignore-not-found
   rm -rf ~/.kube # clear kubectl cache to prevent error on next call
   rm -rf $COMPONENT_STATE_HOME
 else # install gardener
