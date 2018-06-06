@@ -28,5 +28,7 @@ RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
     cd .. && rm -rf pyyaml && \
     curl -O https://kubernetes-helm.storage.googleapis.com/helm-v2.8.2-linux-amd64.tar.gz && \
     tar xfv helm-*linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin && rm -rf linux-amd64 && \
+    curl -LO https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.8/spiff_linux_amd64.zip && \
+    unzip spiff_linux_amd64.zip && mv spiff /usr/local/bin && rm -rf spiff_linux_amd64.zip && \
     echo "\nsource <(/usr/local/bin/kubectl completion bash) \nsource /etc/bash_completion" >> ~/.bashrc && \
     chmod 755 /usr/local/bin/*

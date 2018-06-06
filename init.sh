@@ -35,14 +35,17 @@ export LANDSCAPE_STATE_HOME="$LANDSCAPE_HOME/state"
 export LANDSCAPE_COMPONENTS_HOME="$LANDSCAPE_HOME/setup/components"
 export LANDSCAPE_EXPORT_HOME="$LANDSCAPE_HOME/export"
 
+# merge landscape.yaml if it doesn't exist yet
+if [ ! -f $LANDSCAPE_CONFIG ] && [ -f $LANDSCAPE_HOME/landscape_config.yaml ]; then
+    $SETUP_REPO_PATH/build_landscape_yaml.sh
+fi
+
 # only do this once!
 if [ -z ${SETUP_NON_WRAPPED_PATH:-""} ]; then
     # preserve original path
     export SETUP_NON_WRAPPED_PATH="$PATH"
     export PATH=${SETUP_REPO_PATH}/bin:$PATH
 fi
-
-export LANDSCAPE_NAME="$(grep -m 1 -F "domain_name:" "$LANDSCAPE_HOME/landscape.yaml" | awk '{ print $2 }')"
 
 export LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH=$LANDSCAPE_HOME
 export LANDSCAPE_ACTIVE_CLUSTER_NAME=todo
@@ -52,7 +55,12 @@ if [ ! -d ${LANDSCAPE_STATE_HOME} ] ; then
 fi
 
 # set cloud variant
-export CLOUD_VARIANT="$(yaml2json < $LANDSCAPE_CONFIG | jq -r .cloud.variant)"
+if [ -f $LANDSCAPE_CONFIG ]; then
+    export CLOUD_VARIANT="$(yaml2json < $LANDSCAPE_CONFIG | jq -r .cloud.variant)"
+    export LANDSCAPE_NAME="$(grep -m 1 -F "domain_name:" "$LANDSCAPE_CONFIG" | awk '{ print $2 }')"
+else
+    echo "WARNING: $LANDSCAPE_CONFIG not found! Did you provide $LANDSCAPE_HOME/landscape_config.yaml so that it can be created?"
+fi
 
 source ${SETUP_REPO_PATH}/bin/common
 

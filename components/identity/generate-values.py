@@ -32,7 +32,9 @@ identity_config=utils.find_by_key_value(config["charts"], "name", "identity")
 domain=config["clusters"]["dns"]["domain_name"]
 image_tag=utils.find_by_key_value(config["charts"], "name", "identity")["tag"] 
 
-passwords=identity_config["staticPasswords"]
+passwords=[]
+if identity_config.get("staticPasswords") is not None:
+  passwords=identity_config["staticPasswords"]
 connectors=[]
 if identity_config.get("connectors") is not None:
   connectors=identity_config["connectors"]

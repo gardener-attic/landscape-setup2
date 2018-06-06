@@ -45,10 +45,7 @@ worker = {
   volume_size = ${config["clusters"]["worker"]["volume_size"]}
 }
 
-etcd_backup = {
-  storage_type = "${config["etcd_backup"]["storage_type"]}"
-  region = "${config["etcd_backup"]["region"]}"
-}
+etcd_backup = ${utils.dict_to_tfvars(config["etcd_backup"])}
 
 addons = ${addons}
 
