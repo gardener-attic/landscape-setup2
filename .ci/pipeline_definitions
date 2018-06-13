@@ -1,0 +1,25 @@
+gardener-setup-image:
+  template: 'default'
+  base_definition:
+    traits:
+      version:
+        preprocess:
+          'finalise'
+      publish:
+        dockerimages:
+          gardener-setup:
+            inputs:
+              repos:
+                source: ~
+            registry: 'gcr-readwrite'
+            image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
+    repo:
+      trigger: false
+    steps: ~
+  variants:
+    create-minor-release:
+        release:
+          nextversion: 'bump_minor'
+    create-patch-release:
+        release:
+          nextversion: 'bump_patch'

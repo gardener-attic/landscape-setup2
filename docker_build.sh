@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# read latest version from file
+CURRENT_IMAGE_VERSION=$(<VERSION)
 
 # Build docker image with name "gardener_landscape"
-docker build . -t gardener_landscape
+docker build . -t "eu.gcr.io/gardener-project/gardener/gardener-setup:$CURRENT_IMAGE_VERSION"
