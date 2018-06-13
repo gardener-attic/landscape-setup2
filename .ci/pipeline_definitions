@@ -18,8 +18,10 @@ gardener-setup-image:
     steps: ~
   variants:
     create-minor-release:
+      traits:
         release:
           nextversion: 'bump_minor'
     create-patch-release:
+      traits:
         release:
           nextversion: 'bump_patch'
