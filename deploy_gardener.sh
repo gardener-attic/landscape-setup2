@@ -50,3 +50,5 @@ pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
 popd 1> /dev/null
 
 echo "Gardener successfully deployed!"
+echo ""
+$SETUP_REPO_PATH/print_dashboard_urls.sh
