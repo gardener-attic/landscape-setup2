@@ -32,4 +32,6 @@ RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
     unzip spiff_linux_amd64.zip && mv spiff /usr/local/bin && rm -rf spiff_linux_amd64.zip && \
     echo "\nsource <(/usr/local/bin/kubectl completion bash) \nsource /etc/bash_completion" >> ~/.bashrc && \
     echo "\n\nTERM=xterm-256color" >> ~/.bashrc && \
+    echo "alias k='kubectl' \nalias ks='kubectl -n kube-system' \nalias kg='kubectl -n garden' \nalias ka='kubectl get --all-namespaces'" >> ~/.bash_aliases && \
+    sed -i -e "s/#force_color_prompt=yes/force_color_prompt=yes/g" ~/.bashrc && \
     chmod 755 /usr/local/bin/*
