@@ -14,42 +14,93 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# render issuer file
-mako-render ${COMPONENT_TEMPLATE_HOME}/cert-manager-issuer.yaml.tmpl >${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certmanager
+    # delete certmanager
+    helm delete --purge cert-manager
 
-# install certificate manger
-helm upgrade --install \
-  --force \
-  --wait \
-  --namespace \
-  certmanager cert-manager stable/cert-manager
+    # check if oicd-ca-file line is already there, add it if not
+    pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
+    if [ -z $pos ]; then # line "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt" not found, insert it
+        # find apiserver line to locate patch position
+        pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "apiserver"}}{{$i}}{{end}}{{end}}')
+        if [ -z $pos ]; then
+            if [ $# -gt 3 ] && [ $3 == "--patch-position" ]; then # manually specified patch position
+                pos=$4
+            else
+                fail "Line \"apiserver\" not found in daemonset kube-apiserver! To manually specify the patch position (line below apiserver line), give \"--patch-position <position>\" as additional parameters."
+            fi
+        else 
+            ((pos=$pos+1)) # add 1 to position of apiserver line to compute patch position
+        fi
+    fi
+    # patch line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' into kube-apiserver again
+    kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/'$pos'", "value": "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}]'
 
-# install certificate manager issuer
-kubectl apply -f ${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+    # patch dashboard and ingress 
+    identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+    if [ "$identity_issuer" = "letsencrypt" ] ; then
+        kubectl -n kube-system patch ingress identity-ingress --type merge \
+            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-delete-patch.yaml)"
+    fi
+    
+    dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+    if [ "$dashboard_issuer" = "letsencrypt" ] ; then
+        kubectl -n garden patch ingress gardener-dashboard-ingress --type merge \
+            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-delete-patch.yaml)"
+    fi
 
-# remove existing certificates (they will not be overwritten)
+    # delete letsencrypt secrets
+    kubectl -n garden delete secret gardener-dashboard-tls --ignore-not-found
+    kubectl -n kube-system delete secret identity-tls  --ignore-not-found
 
-kubectl -n garden delete secret gardener-dashboard-tls
-kubectl -n kube-system delete secret identity-tls  
+    # restore certificates by deploying identity and dashboard again
+    # TODO find better solution
+    $LANDSCAPE_COMPONENTS_HOME/deploy.sh identity
+    $LANDSCAPE_COMPONENTS_HOME/deploy.sh dashboard
 
-# patch dashboard and ingress 
-dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
-if [ "$dashboard_issuer" != "letsencrypt" ] ; then
-    kubectl -n garden patch ingress gardener-dashboard-ingress \
-         -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
-fi
-
-identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
-if [ "$identity_issuer" != "letsencrypt" ] ; then
-    kubectl -n kube-system patch ingress identity-ingress \
-         -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
-fi
-
-# find position of the line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' and save the array position of that entry within the yaml to variable
-pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
-if [ $pos ]; then
-    # delete that entry
-    kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
+    # delete certmanager stuff
+    kubectl delete clusterissuer --all
+    kubectl -n certmanager delete secret --all
+    kubectl delete ns certmanager
 else
-    echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
+    # render issuer file
+    mako-render ${COMPONENT_TEMPLATE_HOME}/cert-manager-issuer.yaml.tmpl >${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+
+    # install certificate manger
+    helm upgrade --install \
+    --force \
+    --wait \
+    --namespace \
+    certmanager cert-manager stable/cert-manager \
+    --version v0.3.0
+
+    # install certificate manager issuer
+    kubectl apply -f ${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+
+    # remove existing certificates (they will not be overwritten)
+
+    kubectl -n garden delete secret gardener-dashboard-tls
+    kubectl -n kube-system delete secret identity-tls  
+
+    # patch dashboard and ingress 
+    dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+    if [ "$dashboard_issuer" != "letsencrypt" ] ; then
+        kubectl -n garden patch ingress gardener-dashboard-ingress \
+            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
+    fi
+
+    identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+    if [ "$identity_issuer" != "letsencrypt" ] ; then
+        kubectl -n kube-system patch ingress identity-ingress \
+            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
+    fi
+
+    # find position of the line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' and save the array position of that entry within the yaml to variable
+    pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
+    if [ $pos ]; then
+        # delete that entry
+        kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
+    else
+        echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
+    fi
 fi
