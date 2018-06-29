@@ -43,6 +43,8 @@ k8s/bin/tf destroy -force
 setup/cleanup.sh
 ```
 
+Don't forget the [workaround](#workaround)!
+
 
 ## Step 1: Clone the Repositories and get Dependencies
 
@@ -124,6 +126,29 @@ kube-system     heapster-c8fb4f746-tvts6                                        
 kube-system     kube-apiserver-hcdnc                                                  1/1       Running   0          6m
 [...]
 ```
+
+## <a name="workaround"></a>Step 4.5: Workaround
+
+There is currently an issue with session affinities in Kubernetes, which can break your cluster. 
+While the problem has been fixed (see https://github.com/kubernetes/kubernetes/commit/f2405cf2942739996af2bb76347c2cb0641153aa), 
+this commit is not yet included in a release. 
+
+Until that happens, use the following workaround:
+
+```
+kubectl edit svc kubernetes
+```
+
+Delete the following lines: 
+
+```
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+```
+
+Kubernetes will automatically add `sessionAffinity: None`.
 
 ## Step 5-9: Gardener Setup (Automated)
 
