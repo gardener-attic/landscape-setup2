@@ -1,4 +1,4 @@
-gardener-setup-image:
+gardener-setup-release-and-image:
   template: 'default'
   base_definition:
     traits:
@@ -13,6 +13,27 @@ gardener-setup-image:
                 source: ~
             registry: 'gcr-readwrite'
             image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
+    repo:
+      trigger: false
+    steps:
+      update_image_version: 
+        publish_to: ['source']
+  variants:
+    create-minor-release:
+      traits:
+        release:
+          nextversion: 'bump_minor'
+    create-patch-release:
+      traits:
+        release:
+          nextversion: 'bump_patch'
+gardener-setup-release:
+  template: 'default'
+  base_definition:
+    traits:
+      version:
+        preprocess:
+          'finalise'
     repo:
       trigger: false
     steps: ~

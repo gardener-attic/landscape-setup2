@@ -15,7 +15,7 @@
 # limitations under the License.
 
 # read latest version from file
-CURRENT_IMAGE_VERSION=$(<VERSION)
+CURRENT_IMAGE_VERSION=$(<IMAGE_VERSION)
 IMAGE_NAME="eu.gcr.io/gardener-project/gardener/gardener-setup"
 
 # check if image exists - if not, pull from repo

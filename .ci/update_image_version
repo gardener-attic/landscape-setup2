@@ -14,8 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# read latest version from file
-CURRENT_IMAGE_VERSION=$(<IMAGE_VERSION)
+if [[ -z ${SOURCE_PATH:-""} ]]; then
+  export SOURCE_PATH="$(readlink -f $(dirname ${0})/..)"
+else
+  export SOURCE_PATH="$(readlink -f "$SOURCE_PATH")"
+fi
 
-# Build docker image with name "gardener_landscape"
-docker build . -t "eu.gcr.io/gardener-project/gardener/gardener-setup:$CURRENT_IMAGE_VERSION"
+NEW_IMAGE_VERSION=$(<$SOURCE_PATH/VERSION)
+echo $NEW_IMAGE_VERSION > $SOURCE_PATH/IMAGE_VERSION
+
+echo "Image version is now $NEW_IMAGE_VERSION!"
+
+echo "Preparing commit ..."
+git add $SOURCE_PATH/IMAGE_VERSION
+git commit -m "updating image version to $NEW_IMAGE_VERSION"
+echo $(git log -1)
