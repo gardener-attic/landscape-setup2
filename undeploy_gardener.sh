@@ -18,23 +18,41 @@ echo "Removing components..."
 
 pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
 
-# dashboard 
-./deploy.sh dashboard --uninstall
-
-# identity
-./deploy.sh identity --uninstall
-
-# seed-config
-./deploy.sh seed-config --uninstall
-
-# gardener
-./deploy.sh gardener --uninstall
-
-# helm-tiller
-./deploy.sh helm-tiller --uninstall
-
-# certificates
-./deploy.sh cert --uninstall
+if [ $# -gt 0 ]; then 
+    arg="$1"
+else 
+    arg=dashboard
+fi
+case $arg in
+    (dashboard)
+        # dashboard 
+        ./deploy.sh dashboard --uninstall
+        ;&
+    (identity)
+        # identity
+        ./deploy.sh identity --uninstall
+        ;&
+    (seed-config)
+        # register garden cluster as seed cluster
+        ./deploy.sh seed-config --uninstall
+        ;&
+    (gardener) 
+        # gardener
+        ./deploy.sh gardener --uninstall
+        ;&
+    (helm-tiller) 
+        # helm-tiller
+        ./deploy.sh helm-tiller --uninstall
+        ;&
+    (cert) 
+        # certificates
+        ./deploy.sh cert --uninstall
+        ;;
+    (*)
+        # something else
+        fail "Unknown argument: $arg"
+        ;;
+esac
 
 popd 1> /dev/null
 

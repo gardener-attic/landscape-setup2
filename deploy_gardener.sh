@@ -23,29 +23,41 @@ echo "Setting up the cluster ..."
 
 pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
 
-# kubify - not yet automated
-#./deploy.sh kubify
-
-# certificates
-./deploy.sh cert
-
-# helm-tiller
-./deploy.sh helm-tiller
-
-# gardener
-./deploy.sh gardener
-
-# register garden cluster as seed cluster
-./deploy.sh seed-config
-
-# identity
-./deploy.sh identity
-
-# dashboard 
-./deploy.sh dashboard
-
-# certmanager - there's an extra script for that
-#./deploy.sh certmanager
+if [ $# -gt 0 ]; then 
+    arg="$1"
+else 
+    arg=cert
+fi
+case $arg in
+    (cert) 
+        # certificates
+        ./deploy.sh cert
+        ;&
+    (helm-tiller) 
+        # helm-tiller
+        ./deploy.sh helm-tiller
+        ;&
+    (gardener) 
+        # gardener
+        ./deploy.sh gardener
+        ;&
+    (seed-config)
+        # register garden cluster as seed cluster
+        ./deploy.sh seed-config
+        ;&
+    (identity)
+        # identity
+        ./deploy.sh identity
+        ;&
+    (dashboard)
+        # dashboard 
+        ./deploy.sh dashboard
+        ;;
+    (*)
+        # something else
+        fail "Unknown argument: $arg"
+        ;;
+esac
 
 popd 1> /dev/null
 
