@@ -306,6 +306,13 @@ letsencrypt certificates for both the identity and dashboard ingresses:
 
 After one to two minutes valid certificates should be installed.
 
+Letsencrypt [limits](https://letsencrypt.org/docs/rate-limits/) how many certificates you can get 
+for the same host within a short time. To avoid hitting these limits, you can use the letsencrypt 
+staging server for testing, which has a significantly higher rate limit but produces untrusted 
+certificates.  
+To use the staging server, change the URL in `components/certmanager/cert-manager-issuer.yaml.tmpl` 
+to `https://acme-staging-v02.api.letsencrypt.org/directory`.
+
 # Tearing Down the Landscape
 
 Make sure that you delete all shoot clusters prior to tearing down the
