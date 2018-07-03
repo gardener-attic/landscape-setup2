@@ -29,7 +29,7 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
     success=true
     break;
   fi
-  echo "Cluster not yet reachable. Waiting ..."
+  debug "Cluster not yet reachable. Waiting ..."
   sleep 30
 done
 if ! $success; then
@@ -53,7 +53,7 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
       ((phase=$phase-1)) || true
       continue;
     fi
-    echo "Amount of api server pods ($api_count) doesn't equal specified amount of master nodes ($master_count) yet. Waiting ..."
+    debug "Amount of api server pods ($api_count) doesn't equal specified amount of master nodes ($master_count) yet. Waiting ..."
     ;;
   (2) # check: #etcd == #master nodes
     etcd_count=$(kubectl -n kube-system get pods | grep -i -E "kube-etcd-.... " | wc -l) &> /dev/null
@@ -62,7 +62,7 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
       ((phase=$phase-1)) || true
       continue;
     fi
-    echo "Amount of etcd pods ($etcd_count) doesn't equal specified amount of master nodes ($master_count) yet. Waiting ..."
+    debug "Amount of etcd pods ($etcd_count) doesn't equal specified amount of master nodes ($master_count) yet. Waiting ..."
     ;;
   (1) # check: #ingress == #worker nodes
     ingress_count=$(kubectl -n nginx-ingress get pods | grep -i nginx-ingress-controller | wc -l) &> /dev/null
@@ -71,7 +71,7 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
       ((phase=$phase-1)) || true
       continue;
     fi
-    echo "Amount of ingress pods ($ingress_count) doesn't equal specified amount of worker nodes ($worker_count) yet. Waiting ..."
+    debug "Amount of ingress pods ($ingress_count) doesn't equal specified amount of worker nodes ($worker_count) yet. Waiting ..."
     ;;
   (0) # check: #pods == #running pods
     pod_count=$(kubectl get pods --all-namespaces | wc -l) &> /dev/null
@@ -83,7 +83,7 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
       success=true
       break;
     fi
-    echo "$running_pod_count of $pod_count pods are running. Waiting ..."
+    debug "$running_pod_count of $pod_count pods are running. Waiting ..."
     ;;
   (*) # just decrease phase
     echo "No valid phase: $phase"

@@ -68,5 +68,6 @@ source ${SETUP_REPO_PATH}/bin/common
 export -f fail
 export -f error
 export -f color
+export -f debug
 
 echo "Environment variables configured!"

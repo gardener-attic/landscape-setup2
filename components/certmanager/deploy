@@ -59,8 +59,6 @@ if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certm
     $LANDSCAPE_COMPONENTS_HOME/deploy.sh dashboard
 
     # delete certmanager stuff
-    kubectl delete clusterissuer --all
-    kubectl -n certmanager delete secret --all
     kubectl delete ns certmanager
 else
     # render issuer file
@@ -102,5 +100,21 @@ else
         kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
     else
         echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
+    fi
+
+    # wait until secrets have been recreated
+    max_retry_time=300
+    retry_stop=$(($(date +%s) + max_retry_time))
+    success=false
+    while [[ $(date +%s) -lt $retry_stop ]]; do
+        sleep 10
+        if $(kubectl -n garden get secret gardener-dashboard-tls &> /dev/null) && $(kubectl -n kube-system get secret identity-tls &> /dev/null); then
+        success=true
+        break;
+        fi
+        debug "Secrets gardener-dashboard-tls and identity-tls not recreated yet. Waiting ..."
+    done
+    if ! $success; then
+        fail "Secrets gardener-dashboard-tls and identity-tls not created within $max_retry_time seconds!"
     fi
 fi
