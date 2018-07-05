@@ -14,13 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
-
-./deploy.sh kubify
-
-echo "Cluster successfully set up!"
-
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
-
-popd 1> /dev/null
+echo "Removing sessionAffinity from kubernetes service ..."
+kubectl patch svc kubernetes --type json -p='[{"op": "remove", "path": "/spec/sessionAffinity"}]'
+kubectl get svc kubernetes -o yaml

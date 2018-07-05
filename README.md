@@ -43,9 +43,6 @@ k8s/bin/tf destroy -force
 setup/cleanup.sh
 ```
 
-Don't forget the [workaround](#workaround)!
-
-
 ## Step 1: Clone the Repositories and get Dependencies
 
 Get the `landscape-setup-template` from GitHub and initialize the
@@ -127,19 +124,13 @@ kube-system     kube-apiserver-hcdnc                                            
 [...]
 ```
 
-## <a name="workaround"></a>Step 4.5: Workaround
+## <a name="workaround"></a>Step 4.5: Workaround (Automated)
 
 There is currently an issue with session affinities in Kubernetes, which can break your cluster. 
 While the problem has been fixed (see https://github.com/kubernetes/kubernetes/commit/f2405cf2942739996af2bb76347c2cb0641153aa), 
-this commit is not yet included in a release. 
+the corresponding Kubernetes version is not yet included in this project.
 
-Until that happens, use the following workaround:
-
-```
-kubectl edit svc kubernetes
-```
-
-Delete the following lines: 
+Until that happens, the workaround is to remove the following lines from the `kubernetes` service:
 
 ```
   sessionAffinity: ClientIP
@@ -148,7 +139,9 @@ Delete the following lines:
       timeoutSeconds: 10800
 ```
 
-Kubernetes will automatically add `sessionAffinity: None`.
+Kubernetes will add `sessionAffinity: None` on itself.
+
+This will happen automatically at the end of the `deploy_kubify.sh` script.
 
 ## Step 5-9: Gardener Setup (Automated)
 
