@@ -60,6 +60,7 @@ if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certm
 
     # delete certmanager stuff
     kubectl delete ns certmanager
+    rm -rf $COMPONENT_STATE_HOME
 else
     # render issuer file
     mako-render ${COMPONENT_TEMPLATE_HOME}/cert-manager-issuer.yaml.tmpl >${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
