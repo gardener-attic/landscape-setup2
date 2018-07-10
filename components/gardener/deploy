@@ -66,7 +66,7 @@ else # install gardener
       success=true
       break;
     fi
-    echo -e "$(debug Gardener API server not yet reachable. Waiting...)"
+    debug "Gardener API server not yet reachable. Waiting..."
   done
   if ! $success; then
     fail "Gardener API server did not become reachable within $max_retry_time seconds!"

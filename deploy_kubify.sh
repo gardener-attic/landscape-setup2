@@ -14,8 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-cd components
+pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
+
 ./deploy.sh kubify
-cd ..
 
 echo "Cluster successfully set up!"
+
+echo ""
+$SETUP_REPO_PATH/session_affinity_fix.sh
+
+popd 1> /dev/null

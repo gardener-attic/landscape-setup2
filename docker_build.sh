@@ -14,8 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+pushd $(dirname ${0}) 1> /dev/null
+
 # read latest version from file
-CURRENT_IMAGE_VERSION=$(<VERSION)
+CURRENT_IMAGE_VERSION=$(<IMAGE_VERSION)
 
 # Build docker image with name "gardener_landscape"
 docker build . -t "eu.gcr.io/gardener-project/gardener/gardener-setup:$CURRENT_IMAGE_VERSION"
+
+popd 1> /dev/null

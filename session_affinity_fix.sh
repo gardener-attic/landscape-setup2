@@ -14,22 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-for i in ${COMPONENT_TEMPLATE_HOME}/${CLOUD_VARIANT}/*.tmpl ; do
-    filet=$(basename $i)
-    file=${filet::-5}
-    if [ ! -f ${COMPONENT_STATE_HOME}/$file ]; then # create yaml if it doesn't exist
-        mako-render $i > ${COMPONENT_STATE_HOME}/$file
-    fi
-done
-
-if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall seed-config
-    for i in $(ls -r ${COMPONENT_STATE_HOME}/*.yaml); do # iterate over files in reverse order
-        kubectl delete -f $i --ignore-not-found
-    done
-    rm -rf $COMPONENT_STATE_HOME
-else # install seed-config
-    for i in ${COMPONENT_STATE_HOME}/*.yaml ; do
-        echo deploying $i
-        kubectl apply -f $i
-    done
-fi
+echo "Removing sessionAffinity from kubernetes service ..."
+kubectl patch svc kubernetes --type json -p='[{"op": "remove", "path": "/spec/sessionAffinity"}]'
+kubectl get svc kubernetes -o yaml
