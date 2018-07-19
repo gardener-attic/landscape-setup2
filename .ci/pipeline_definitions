@@ -4,7 +4,7 @@ gardener-setup-release-and-image:
     traits:
       version:
         preprocess:
-          'finalise'
+          'finalize'
       publish:
         dockerimages:
           gardener-setup:
@@ -33,7 +33,7 @@ gardener-setup-release:
     traits:
       version:
         preprocess:
-          'finalise'
+          'finalize'
     repo:
       trigger: false
     steps: ~
