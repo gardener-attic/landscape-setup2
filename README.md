@@ -43,6 +43,19 @@ k8s/bin/tf destroy -force
 setup/cleanup.sh
 ```
 
+### Kubectl Aliases
+
+The following aliases can be used within the docker container:
+```
+k => kubectl
+ks => kubectl -n kube-system
+kg => kubectl -n garden
+kn => kubectl -n
+ka => kubectl get --all-namespaces
+```
+
+Bash completion works for all of them except for `ka`. 
+
 ## Step 1: Clone the Repositories and get Dependencies
 
 Get the `landscape-setup-template` from GitHub and initialize the
