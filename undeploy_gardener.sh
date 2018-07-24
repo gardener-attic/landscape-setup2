@@ -34,7 +34,8 @@ case $arg in
         ;&
     (seed-config)
         # register garden cluster as seed cluster
-        ./deploy.sh seed-config --uninstall
+        # workaround: will delete all possible seeds, even if not created
+        ./deploy.sh seed-config --uninstall aws az gcp openstack
         ;&
     (gardener) 
         # gardener

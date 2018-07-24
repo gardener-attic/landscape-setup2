@@ -19,7 +19,7 @@ Follow these steps to install Gardener. Do not proceed to the next
 step in case of errors.
 
 
-## TLDR
+## TL;DR
 If you are already familiar with the installation procedure and just want a short 
 summary of the commands you have to use, here it is:
 
@@ -264,6 +264,36 @@ between regions as well.
 ```
 ./deploy.sh seed-config
 ```
+
+#### Configuring Additional Seeds
+
+By default, this step will create a seed for the cloud provider the Gardener has 
+been deployed on and thus creating shoots on this provider will be possible. 
+If you want to create shoots on other cloud providers, you will have to configure 
+additional seeds. There are two options for that:
+
+If the seed-config deploy script is called without any arguments (as shown above), 
+it will create seeds for all providers specified in the `seed_config.seeds` section 
+in the `landscape_config.yaml` file. By default, the only entry in that list is 
+the cloud provider chosen for the Gardener cluster, but you can extend the list.
+
+It is also possible to provide the seed-config deploy script with additional arguments 
+specifying which seeds should be created. Multiple arguments can be given and 
+the script will ignore the list in the `landscape_config.yaml` file when called with 
+arguments. Only the specified seeds will be created, already existing seeds are not 
+affected. If a given seed already exists, it will be updated to the current configuration. 
+
+In both cases, the corresponding variant nodes in `authentication` and `seed_config` 
+have to be filled out in the config file. The provided credentials won't be used for shoot 
+cluster creation, but for storing the etcd backups of the shoot clusters.
+
+Valid values for seeds are `aws`, `az` (for Azure), `gcp`, and `openstack`. Please note, 
+that while it is possible to create seeds for any cloud provider on any cloud provider, 
+shoot creation may not work across cloud providers for every combination. It should 
+always work if seed (Gardener cluster in this setup) and shoot are on the same provider, 
+though. 
+
+#### Creating a Shoot
 
 That's it! If everything went fine you should now be able to create shoot clusters.
 You can start with a sample
