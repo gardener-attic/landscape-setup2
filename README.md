@@ -137,7 +137,7 @@ kube-system     kube-apiserver-hcdnc                                            
 [...]
 ```
 
-## <a name="workaround"></a>Step 4.5: Workaround (Automated)
+## Step 4.5: Workaround (Automated)
 
 There is currently an issue with session affinities in Kubernetes, which can break your cluster. 
 While the problem has been fixed (see https://github.com/kubernetes/kubernetes/commit/f2405cf2942739996af2bb76347c2cb0641153aa), 
@@ -297,7 +297,7 @@ though.
 
 That's it! If everything went fine you should now be able to create shoot clusters.
 You can start with a sample
-[manifest](https://github.com/gardener/gardener/blob/master/example/shoot-aws.yaml)
+[manifest](https://github.com/gardener/gardener/blob/master/example/90-shoot-aws.yaml)
 and create a shoot cluster by standard Kubernetes means:
 
 ```
