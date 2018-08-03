@@ -37,7 +37,7 @@ export LANDSCAPE_EXPORT_HOME="$LANDSCAPE_HOME/export"
 
 # merge landscape.yaml if it doesn't exist yet
 if [ ! -f $LANDSCAPE_CONFIG ] && [ -f $LANDSCAPE_HOME/landscape_config.yaml ]; then
-    $SETUP_REPO_PATH/build_landscape_yaml.sh
+    $SETUP_REPO_PATH/build_landscape_yaml.sh --no-source
 fi
 
 # only do this once!

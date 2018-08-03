@@ -15,3 +15,6 @@
 # limitations under the License.
 
 spiff merge $LANDSCAPE_HOME/landscape_base.yaml $LANDSCAPE_HOME/landscape_config.yaml > $LANDSCAPE_HOME/landscape.yaml
+if [ $# -eq 0 ] || [ $1 != "--no-source" ]; then
+    source $SETUP_REPO_PATH/init.sh
+fi
