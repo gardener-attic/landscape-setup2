@@ -1,6 +1,6 @@
 # Gardener Setup Scripts
 
-This repo serves as the installation manual for a simple Gardener setup. Basically, it explains how you can create a simple cluster with project [Kubify](https://github.com/gardener/kubify) and walks you through the steps required to bootstrap a Gardener cluster in an automated manner (if you just want to run a script) or in a step-by-step manner for those who seek more understanding of whats going on under the hood. 
+This README serves as the installation manual for a simple Gardener setup. Basically, it explains how you can create a simple cluster with project [Kubify](https://github.com/gardener/kubify) and walks you through the steps required to bootstrap a Gardener cluster in an automated manner (if you just want to run a script) or in a step-by-step manner for those who seek more understanding of whats going on under the hood. 
 
 This repo is also part of the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
 
