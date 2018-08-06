@@ -67,7 +67,7 @@ k8s/bin/tf destroy -force
 setup/cleanup.sh
 ```
 
-If not, please follow our step-by-step guide below.
+Otherwise follow our step-by-step guide below.
 
 ## Step 1: Clone the Repositories and get Dependencies
 
