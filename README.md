@@ -16,9 +16,9 @@ Finally, the table of contents can be found below in case you want to jump quick
   - [Step 2: Configure the Landscape](#step-2-configure-the-landscape)
   - [Step 3: Build and Run Docker Container](#step-3-build-and-run-docker-container)
   - [Step 4: Create a Kubernetes Cluster via Kubify](#step-4-create-a-kubernetes-cluster-via-kubify)
-  - [<a name="workaround"></a>Step 4.5: Workaround (Automated)](#a-name%22workaround%22astep-45-workaround-automated)
+    - [Step 4.5: Workaround (Automated)](#step-45-workaround-automated)
   - [Step 5-9: Gardener Setup (Automated)](#step-5-9-gardener-setup-automated)
-  - [<a name="access_dashboard"></a>Accessing the Dashboard](#a-name%22accessdashboard%22aaccessing-the-dashboard)
+  - [Accessing the Dashboard](#accessing-the-dashboard)
   - [Step 5-9: Gardener Setup (Manual)](#step-5-9-gardener-setup-manual)
     - [Step 5: Generate Certificates](#step-5-generate-certificates)
     - [Step 6: Deploy tiller](#step-6-deploy-tiller)
@@ -153,7 +153,7 @@ kube-system     kube-apiserver-hcdnc                                            
 [...]
 ~~~
 
-## <a name="workaround"></a>Step 4.5: Workaround (Automated)
+### Step 4.5: Workaround (Automated)
 
 There is currently an issue with session affinities in Kubernetes, which can break your cluster. 
 While the problem has been fixed (see [this issue](https://github.com/kubernetes/kubernetes/commit/f2405cf2942739996af2bb76347c2cb0641153aa)), 
@@ -185,7 +185,7 @@ After successful completion, you can either continue with [step 10 (optional)](#
 the Gardener (see *[Accessing the Dashboard](#access_dashboard)*).
 
 
-## <a name="access_dashboard"></a>Accessing the Dashboard
+## Accessing the Dashboard
 
 After step 9 you will be able to access the Gardener dashboard. This example assumes that 
 your cluster is located at `mycluster.example.org` - just replace that part with 
