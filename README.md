@@ -4,8 +4,6 @@ This README serves as the installation manual for a simple Gardener setup. Basic
 
 This repo is also part of the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project which serves as a configuration template for this installer. You can find further information there.
 
-Finally, the table of contents can be found below in case you want to jump quickly to your favorite part:
-
 <!-- TOC -->
 
 - [Gardener Setup Scripts](#gardener-setup-scripts)
