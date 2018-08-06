@@ -1,8 +1,35 @@
 # Gardener Setup Scripts
 
-This is the installation manual for a simple Gardener setup. It is part of the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
+This repo serves as the installation manual for a simple Gardener setup. Basically, it explains how you can create a simple cluster with project [Kubify](https://github.com/gardener/kubify) and walks you through the steps required to bootstrap a Gardener cluster in an automated manner (if just want to run a scrip) or in a step-by-step manner for those who seek more understanding of what's going on under the hood. 
 
+This repo is also part of the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
 
+Finally, the table of contents can be found below in case you want to jump quickly to your favorite part:
+
+<!-- TOC -->
+
+- [Gardener Setup Scripts](#gardener-setup-scripts)
+- [Prerequisites](#prerequisites)
+- [Gardener Installation](#gardener-installation)
+  - [TLDR](#tldr)
+  - [Step 1: Clone the Repositories and get Dependencies](#step-1-clone-the-repositories-and-get-dependencies)
+  - [Step 2: Configure the Landscape](#step-2-configure-the-landscape)
+  - [Step 3: Build and Run Docker Container](#step-3-build-and-run-docker-container)
+  - [Step 4: Create a Kubernetes Cluster via Kubify](#step-4-create-a-kubernetes-cluster-via-kubify)
+  - [<a name="workaround"></a>Step 4.5: Workaround (Automated)](#a-name%22workaround%22astep-45-workaround-automated)
+  - [Step 5-9: Gardener Setup (Automated)](#step-5-9-gardener-setup-automated)
+  - [<a name="access_dashboard"></a>Accessing the Dashboard](#a-name%22accessdashboard%22aaccessing-the-dashboard)
+  - [Step 5-9: Gardener Setup (Manual)](#step-5-9-gardener-setup-manual)
+    - [Step 5: Generate Certificates](#step-5-generate-certificates)
+    - [Step 6: Deploy tiller](#step-6-deploy-tiller)
+    - [Step 7: Deploy Gardener](#step-7-deploy-gardener)
+    - [Step 8: Register Garden Cluster as Seed Cluster](#step-8-register-garden-cluster-as-seed-cluster)
+    - [Step 9: Install Identity and Dashboard](#step-9-install-identity-and-dashboard)
+  - [Step 10: Apply Valid Certificates (optional)](#step-10-apply-valid-certificates-optional)
+- [Tearing Down the Landscape](#tearing-down-the-landscape)
+- [Cleanup](#cleanup)
+
+<!-- /TOC -->
 # Prerequisites
 
 Before getting started make sure you have the following at hand:
@@ -11,7 +38,6 @@ Before getting started make sure you have the following at hand:
 with a couple of VMs. **This project currently supports AWS and Openstack.**
 * A Linux machine (virtual machine is fine) or a Mac with basic tools such as a
 git client and the Docker runtime installed.
-
 
 # Gardener Installation
 
@@ -23,7 +49,7 @@ step in case of errors.
 If you are already familiar with the installation procedure and just want a short 
 summary of the commands you have to use, here it is:
 
-```
+```bash
 # setup
 git clone  --recursive https://github.com/gardener/landscape-setup-template.git landscape
 cd landscape/setup
@@ -43,12 +69,14 @@ k8s/bin/tf destroy -force
 setup/cleanup.sh
 ```
 
+If not, please follow our step-by-step guide below.
+
 ## Step 1: Clone the Repositories and get Dependencies
 
 Get the `landscape-setup-template` from GitHub and initialize the
 submodules:
 
-```
+```bash
 git clone  --recursive https://github.com/gardener/landscape-setup-template.git landscape
 cd landscape
 ```
@@ -63,40 +91,41 @@ origin so you do not accidentally publish your secrets to the public template re
 There is a `landscape_config.yaml` file in the landscape project. This is the only
 file that you need to modify - all other configuration files will be
 derived from this and the `landscape_base.yaml` file. The latter one contains the merging instructions
-as well as technical configurations and it shouldn't be touched unless you know what you are doing. 
+as well as technical configurations and it shouldn't be touched unless you know what you are doing.
 
 ## Step 3: Build and Run Docker Container
 
 First, you need to change into the setup folder:
-```
+
+```bash
 cd setup
 ```
 
 Then run the container:
 
-```
+```bash
 ./docker_run.sh
 ```
 
 After this,
 
-* you will be connected to the container via an interactive shell
-* the landscape folder will be mounted in that container
-* your current working directory will be `setup` folder
-* `setup/init.sh` is sourced, meaning
-  * the environment variables will be set
-  * kubectl will be configured to communicate with your cluster
+- you will be connected to the container via an interactive shell
+- the landscape folder will be mounted in that container
+- your current working directory will be `setup` folder
+- `setup/init.sh` is sourced, meaning
+  - the environment variables will be set
+  - kubectl will be configured to communicate with your cluster
 
-The `docker_run.sh` script searches for the image locally and pulls it from an image repository, if it isn't found. 
-If pulling the image doesn't work - which will probably be the case if the version in the `setup/VERSION` file 
-doesn't match a release version of the setup submodule - you can use the `docker_build.sh` script to build the image locally. 
+The `docker_run.sh` script searches for the image locally and pulls it from an image repository, if it isn't found.
+If pulling the image doesn't work - which will probably be the case if the version in the `setup/VERSION` file
+doesn't match a release version of the setup submodule - you can use the `docker_build.sh` script to build the image locally.
 
 Most of the scripts need a `landscape.yaml` file, that can be generated from a merge of `landscape_base.yaml` and `landscape_config.yaml`. 
 The `init.sh` script (which is sourced in the `docker_run.sh` script, see above) 
 will do that automatically, if it doesn't already exist. 
 In case you want to overwrite an existing `landscape.yaml` file or generate it manually, you can use this script:
 
-```
+```bash
 ./build_landscape_yaml.sh
 ```
 
@@ -104,7 +133,7 @@ In case you want to overwrite an existing `landscape.yaml` file or generate it m
 
 You can use this script to run the cluster setup:
 
-```
+```bash
 ./deploy_kubify.sh
 ```
 
@@ -115,19 +144,19 @@ If you get errors during the cluster setup, just try to run the script again.
 
 Once completed the following command should show all deployed pods:
 
-```
+~~~markdown
 root@c41327633d6d:/landscape# kubectl get pods --all-namespaces
 NAMESPACE       NAME                                                                  READY     STATUS    RESTARTS   AGE
 kube-system     etcd-operator-75dcfcf4f7-xkm4h                                        1/1       Running   0          6m
 kube-system     heapster-c8fb4f746-tvts6                                              2/2       Running   0          2m
 kube-system     kube-apiserver-hcdnc                                                  1/1       Running   0          6m
 [...]
-```
+~~~
 
 ## <a name="workaround"></a>Step 4.5: Workaround (Automated)
 
 There is currently an issue with session affinities in Kubernetes, which can break your cluster. 
-While the problem has been fixed (see https://github.com/kubernetes/kubernetes/commit/f2405cf2942739996af2bb76347c2cb0641153aa), 
+While the problem has been fixed (see [this issue](https://github.com/kubernetes/kubernetes/commit/f2405cf2942739996af2bb76347c2cb0641153aa)), 
 the corresponding Kubernetes version is not yet included in this project.
 
 Until that happens, the workaround is to remove the following lines from the `kubernetes` service:
