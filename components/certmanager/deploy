@@ -18,7 +18,7 @@ if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certm
     # delete certmanager
     helm delete --purge cert-manager
 
-    # check if oicd-ca-file line is already there, add it if not
+    # check if oidc-ca-file line is already there, add it if not
     pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
     if [ -z $pos ]; then # line "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt" not found, insert it
         # find apiserver line to locate patch position
@@ -32,9 +32,9 @@ if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certm
         else 
             ((pos=$pos+1)) # add 1 to position of apiserver line to compute patch position
         fi
+        # patch line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' into kube-apiserver again
+        kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/'$pos'", "value": "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}]'
     fi
-    # patch line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' into kube-apiserver again
-    kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/'$pos'", "value": "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}]'
 
     # patch dashboard and ingress 
     identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
