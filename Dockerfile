@@ -14,7 +14,7 @@
 
 FROM ubuntu:16.04
 
-RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
+RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl groff \
     zip unzip git iputils-ping python-pip apache2-utils vim bash-completion && \
     curl -L "https://github.com/bronze1man/yaml2json/raw/master/builds/linux_amd64/yaml2json" -o /usr/local/bin/yaml2json && \
     curl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /usr/local/bin/cfssl && \
@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl \
     git clone https://github.com/yaml/pyyaml.git pyyaml && cd pyyaml && \
     python setup.py --without-libyaml install && \
     cd .. && rm -rf pyyaml && \
+    pip install awscli --ignore-installed pyyaml && \
     curl -O https://kubernetes-helm.storage.googleapis.com/helm-v2.8.2-linux-amd64.tar.gz && \
     tar xfv helm-*linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin && rm -rf linux-amd64 && \
     curl -LO https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.8/spiff_linux_amd64.zip && \
