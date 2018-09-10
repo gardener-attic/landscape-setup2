@@ -43,10 +43,10 @@ worker_count="$(yaml2json < $LANDSCAPE_CONFIG | jq -r .clusters.worker.count)"
 max_retry_time=600
 retry_stop=$(($(date +%s) + max_retry_time))
 success=false
-phase=3
+phase=2
 while [[ $(date +%s) -lt $retry_stop ]]; do
   case $phase in
-  (3) # check: #apiserver == #master nodes
+  (2) # check: #apiserver == #master nodes
     api_count=$(kubectl -n kube-system get pods | grep -i kube-apiserver | wc -l) &> /dev/null
     if [ $api_count -eq $master_count ]; then
       echo "Amount of api server pods equals specified amount of master nodes: $api_count"
@@ -54,15 +54,6 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
       continue;
     fi
     debug "Amount of api server pods ($api_count) doesn't equal specified amount of master nodes ($master_count) yet. Waiting ..."
-    ;;
-  (2) # check: #etcd == #master nodes
-    etcd_count=$(kubectl -n kube-system get pods | grep -i -E "kube-etcd-.... " | wc -l) &> /dev/null
-    if [ $etcd_count -eq $master_count ]; then
-      echo "Amount of etcd pods equals specified amount of master nodes: $etcd_count"
-      ((phase=$phase-1)) || true
-      continue;
-    fi
-    debug "Amount of etcd pods ($etcd_count) doesn't equal specified amount of master nodes ($master_count) yet. Waiting ..."
     ;;
   (1) # check: #ingress == #worker nodes
     ingress_count=$(kubectl -n nginx-ingress get pods | grep -i nginx-ingress-controller | wc -l) &> /dev/null
