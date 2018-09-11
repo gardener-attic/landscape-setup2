@@ -16,7 +16,7 @@ FROM ubuntu:16.04
 
 RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl groff \
     zip unzip git iputils-ping python-pip apache2-utils vim bash-completion && \
-    curl -L "https://github.com/bronze1man/yaml2json/raw/master/builds/linux_amd64/yaml2json" -o /usr/local/bin/yaml2json && \
+    curl -L "https://github.com/bronze1man/yaml2json/releases/download/v1.2/yaml2json_linux_amd64" -o /usr/local/bin/yaml2json && \
     curl https://pkg.cfssl.org/R1.2/cfssl_linux-amd64 -o /usr/local/bin/cfssl && \
     curl https://pkg.cfssl.org/R1.2/cfssljson_linux-amd64 -o /usr/local/bin/cfssljson && \
     curl https://releases.hashicorp.com/terraform/0.11.3/terraform_0.11.3_linux_amd64.zip -o terraform.zip && \
