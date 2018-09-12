@@ -1,0 +1,250 @@
+<%
+import os, yaml, sys
+# import our utility library
+sys.path.insert(0, os.path.join(os.environ["LANDSCAPE_SCRIPTS_HOME"], "lib"))
+import utils
+
+config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
+region=config["seed_config"]["variant_{}".format(seed)].get("region")
+image=config["seed_config"]["variant_{}".format(seed)].get("image")
+zones=config["seed_config"]["variant_{}".format(seed)].get("zones")
+%>
+---
+% if seed == "aws":
+apiVersion: garden.sapcloud.io/v1beta1
+kind: CloudProfile
+metadata:
+  name: aws
+spec:
+  aws:
+    constraints:
+      dnsProviders:
+      - name: aws-route53
+      - name: unmanaged
+      kubernetes:
+        versions:
+        - 1.11.0
+        - 1.10.5
+        - 1.9.9
+      machineImages:
+      - name: CoreOS
+        regions:
+        - name: ${region}
+          ami: ${image}
+      machineTypes:
+      - name: m4.large
+        cpu: "2"
+        gpu: "0"
+        memory: 8Gi
+      - name: m4.xlarge
+        cpu: "4"
+        gpu: "0"
+        memory: 16Gi
+      - name: m4.2xlarge
+        cpu: "8"
+        gpu: "0"
+        memory: 32Gi
+      - name: m4.4xlarge
+        cpu: "16"
+        gpu: "0"
+        memory: 64Gi
+      - name: m4.10xlarge
+        cpu: "40"
+        gpu: "0"
+        memory: 160Gi
+      - name: m4.16xlarge
+        cpu: "64"
+        gpu: "0"
+        memory: 256Gi
+      volumeTypes:
+      - name: gp2
+        class: standard
+      - name: io1
+        class: premium
+      zones:
+      - region: ${region}
+        names:
+        % for a in zones:
+        - ${a}
+        % endfor
+% elif seed == "openstack":
+apiVersion: garden.sapcloud.io/v1beta1
+kind: CloudProfile
+metadata:
+  name: openstack
+spec:
+  openstack:
+    constraints:
+      dnsProviders:
+      - name: aws-route53
+      - name: unmanaged
+      loadBalancerProviders:
+      - name: ${config["misc"]["variant_openstack"]["os_lbaas_provider"]}
+      floatingPools:
+      - name: ${config["misc"]["variant_openstack"]["os_fip_pool_name"]}
+      kubernetes:
+        versions:
+        - 1.11.0
+        - 1.10.5
+        - 1.9.9
+      machineImages:
+      - name: CoreOS
+        image: ${image}
+      machineTypes:
+      - name: medium_2_4
+        cpu: "2"
+        gpu: "0"
+        memory: 4Gi
+        volumeType: default
+        volumeSize: 20Gi
+      - name: medium_4_8
+        cpu: "4"
+        gpu: "0"
+        memory: 8Gi
+        volumeType: default
+        volumeSize: 40Gi
+      zones:
+      - region: ${region}
+        names:
+        % for a in zones:
+        - ${a}
+        % endfor
+    keystoneURL: ${config["authentication"]["variant_openstack"]["os_auth_url"]}
+% elif seed == "az":
+apiVersion: garden.sapcloud.io/v1beta1
+kind: CloudProfile
+metadata:
+  name: az
+spec:
+  azure:
+    constraints:
+      dnsProviders:
+      - name: aws-route53
+      - name: unmanaged
+      kubernetes:
+        versions:
+        - 1.11.0
+        - 1.10.5
+        - 1.9.9
+      machineImages:
+      - name: CoreOS
+        publisher: CoreOS
+        offer: CoreOS
+        sku: Stable
+        version: 1745.7.0
+      machineTypes:
+      - name: Standard_DS2_v2
+        cpu: "2"
+        gpu: "0"
+        memory: 7Gi
+      - name: Standard_DS3_v2
+        cpu: "4"
+        gpu: "0"
+        memory: 14Gi
+      - name: Standard_DS4_v2
+        cpu: "8"
+        gpu: "0"
+        memory: 28Gi
+      - name: Standard_DS5_v2
+        cpu: "16"
+        gpu: "0"
+        memory: 56Gi
+      - name: Standard_F1s
+        cpu: "1"
+        gpu: "0"
+        memory: 2Gi
+      - name: Standard_F2s
+        cpu: "2"
+        gpu: "0"
+        memory: 4Gi
+      - name: Standard_F4s
+        cpu: "4"
+        gpu: "0"
+        memory: 8Gi
+      - name: Standard_F8s
+        cpu: "8"
+        gpu: "0"
+        memory: 16Gi
+      - name: Standard_F16s
+        cpu: "16"
+        gpu: "0"
+        memory: 32Gi
+      volumeTypes:
+      - name: standard
+        class: standard
+      - name: premium
+        class: premium
+    countUpdateDomains:
+    - region: westeurope
+      count: 5
+    - region: northeurope
+      count: 5
+    - region: eastus
+      count: 5
+    - region: eastus2
+      count: 5
+    countFaultDomains:
+    - region: westeurope
+      count: 3
+    - region: northeurope
+      count: 3
+    - region: eastus
+      count: 3
+    - region: eastus2
+      count: 3
+% elif seed == "gcp":
+apiVersion: garden.sapcloud.io/v1beta1
+kind: CloudProfile
+metadata:
+  name: gcp
+spec:
+  gcp:
+    constraints:
+      dnsProviders:
+      - name: aws-route53
+      - name: unmanaged
+      kubernetes:
+        versions:
+        - 1.11.0
+        - 1.10.5
+        - 1.9.9
+      machineImages: # See https://console.cloud.google.com/projectselector/compute/images?_ga=2.231982107.520567900.1515353192-2119264059.1486635932&supportedpurview=project&angularJsUrl=%2Fprojectselector%2Fcompute%2Fimages%3F_ga%3D2.231982107.520567900.1515353192-2119264059.1486635932%26supportedpurview%3Dproject&authuser=1
+      - name: CoreOS
+        image: projects/coreos-cloud/global/images/coreos-stable-1745-7-0-v20180614
+      machineTypes:
+      - name: n1-standard-2
+        cpu: "2"
+        gpu: "0"
+        memory: 7500Mi
+      - name: n1-standard-4
+        cpu: "4"
+        gpu: "0"
+        memory: 15Gi
+      - name: n1-standard-8
+        cpu: "8"
+        gpu: "0"
+        memory: 30Gi
+      - name: n1-standard-16
+        cpu: "16"
+        gpu: "0"
+        memory: 60Gi
+      - name: n1-standard-32
+        cpu: "32"
+        gpu: "0"
+        memory: 120Gi
+      - name: n1-standard-64
+        cpu: "64"
+        gpu: "0"
+        memory: 240Gi
+      volumeTypes:
+      - name: pd-standard
+        class: standard
+      - name: pd-ssd
+        class: premium
+      zones: # https://cloud.google.com/compute/docs/regions-zones/
+      - region: ${region}
+        names:
+        % for a in zones:
+        - ${a}
+        % endfor
+% endif

@@ -37,6 +37,7 @@ values={
   "image": {
     "tag": image_tag,
   },
+  "apiServerUrl": "https://api." + domain, 
   "hosts": [
     "dashboard.ingress." + domain,
   ],

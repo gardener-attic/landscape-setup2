@@ -66,8 +66,15 @@ values={
     },
     "defaultDomains": [],
     "gitHub": [],
-    "openVPNDiffieHellmanKey": gardener_config["openVPNDiffieHellmanKey"]
-#    "alertingSMTP": gardener_config["values"]["controller"]["alertingSMTP"]
+    "openVPNDiffieHellmanKey": gardener_config["openVPNDiffieHellmanKey"],
+#    "alertingSMTP": gardener_config["values"]["controller"]["alertingSMTP"],
+    "config": {
+      "controllers": {
+        "seed": {
+          "reserveExcessCapacity": False,
+        }
+      }
+    }
   }
 }
 

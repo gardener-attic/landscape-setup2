@@ -14,7 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-spiff merge $LANDSCAPE_HOME/landscape_base.yaml $LANDSCAPE_HOME/landscape_config.yaml > $LANDSCAPE_HOME/landscape.yaml
-if [ $# -eq 0 ] || [ $1 != "--no-source" ]; then
-    source $SETUP_REPO_PATH/init.sh
+shoots=$(kubectl get shoots --all-namespaces -o json)
+len=$(echo "$shoots" | jq ".items | length")
+
+if [ $len -eq 0 ] ; then
+    echo "No shoots found!"
 fi
+
+for i in $(seq 0 $((len - 1))); do # go from 0 to len-1
+    shoot_name=$(echo "$shoots" | jq -r ".items[$i].metadata.name")
+    shoot_namespace=$(echo "$shoots" | jq -r ".items[$i].metadata.namespace")
+
+    echo "Deleting shoot $shoot_name in namespace $shoot_namespace ..."
+    $GARDENER_REPO_PATH/hack/delete-shoot $shoot_name $shoot_namespace 1> /dev/null & # allow for parallel shoot deletion
+done
+
+wait # wait until all shoots are deleted

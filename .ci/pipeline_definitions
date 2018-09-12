@@ -1,32 +1,3 @@
-gardener-setup-release-and-image:
-  template: 'default'
-  base_definition:
-    traits:
-      version:
-        preprocess:
-          'finalize'
-      publish:
-        dockerimages:
-          gardener-setup:
-            inputs:
-              repos:
-                source: ~
-            registry: 'gcr-readwrite'
-            image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
-    repo:
-      trigger: false
-    steps:
-      update_image_version: 
-        publish_to: ['source']
-  variants:
-    create-minor-release:
-      traits:
-        release:
-          nextversion: 'bump_minor'
-    create-patch-release:
-      traits:
-        release:
-          nextversion: 'bump_patch'
 gardener-setup-release:
   template: 'default'
   base_definition:
@@ -38,11 +9,43 @@ gardener-setup-release:
       trigger: false
     steps: ~
   variants:
-    create-minor-release:
+    minor-release-and-image:
+      steps:
+        update_image_version: 
+          publish_to: ['source']
+      traits:
+        publish:
+            dockerimages:
+                gardener-setup:
+                    inputs:
+                        repos:
+                            source: ~
+                    registry: 'gcr-readwrite'
+                    image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
+                    tag_as_latest: true
+        release:
+          nextversion: 'bump_minor'
+    patch-release-and-image:
+      steps:
+        update_image_version: 
+          publish_to: ['source']
+      traits:
+        publish:
+            dockerimages:
+                gardener-setup:
+                    inputs:
+                        repos:
+                            source: ~
+                    registry: 'gcr-readwrite'
+                    image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
+                    tag_as_latest: true
+        release:
+          nextversion: 'bump_patch'
+    minor-release:
       traits:
         release:
           nextversion: 'bump_minor'
-    create-patch-release:
+    patch-release:
       traits:
         release:
           nextversion: 'bump_patch'

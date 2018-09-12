@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "Removing components..."
-
 pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
 
 if [ $# -gt 0 ]; then 
@@ -23,6 +21,28 @@ if [ $# -gt 0 ]; then
 else 
     arg=dashboard
 fi
+
+# if gardener is still deployed, remove shoots
+# this is done before so that e.g. the dashboard is not deleted
+# in case something with the shoot deletion doesn't work.
+case $arg in 
+    (dashboard)
+        ;&
+    (identity)
+        ;&
+    (seed-config)
+        ;&
+    (gardener)
+        echo "Deleting remaining shoots, if any ..."
+        $SETUP_REPO_PATH/delete_all_shoots.sh
+        if [ $(kubectl get shoots --all-namespaces 2> /dev/null | wc -l) -gt 0 ] ; then
+            fail "It seems there are still shoots left! Undeploy has been stopped."
+        fi 
+        ;;
+esac
+
+# remove components
+echo "Removing components..."
 case $arg in
     (dashboard)
         # dashboard 
@@ -34,7 +54,8 @@ case $arg in
         ;&
     (seed-config)
         # register garden cluster as seed cluster
-        ./deploy.sh seed-config --uninstall
+        # workaround: will delete all possible seeds, even if not created
+        ./deploy.sh seed-config --uninstall aws az gcp openstack
         ;&
     (gardener) 
         # gardener

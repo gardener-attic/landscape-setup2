@@ -20,12 +20,14 @@ else
   export SOURCE_PATH="$(readlink -f "$SOURCE_PATH")"
 fi
 
-NEW_IMAGE_VERSION=$(<$SOURCE_PATH/VERSION)
-echo $NEW_IMAGE_VERSION > $SOURCE_PATH/IMAGE_VERSION
+cd $SOURCE_PATH
+
+NEW_IMAGE_VERSION=$(grep -E "[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+" -o < VERSION) # strip off '-dev' suffix
+echo $NEW_IMAGE_VERSION > IMAGE_VERSION
 
 echo "Image version is now $NEW_IMAGE_VERSION!"
 
 echo "Preparing commit ..."
-git add $SOURCE_PATH/IMAGE_VERSION
+git add IMAGE_VERSION
 git commit -m "updating image version to $NEW_IMAGE_VERSION"
 echo $(git log -1)
