@@ -321,7 +321,7 @@ Now you should be able to open the "Gardener" dashboard and start creating
 shoot clusters. 
 
 
-## Step 10: Apply Valid Certificates (optional)
+## <a name="step10"></a>Step 10: Apply Valid Certificates (optional)
 
 Ensure that you are in the components directory for installing the certmanager:
 
