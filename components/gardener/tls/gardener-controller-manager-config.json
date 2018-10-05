@@ -1,0 +1,16 @@
+{
+    "CN": "gardener-controller-manager.garden.svc.cluster.local",
+    "hosts": [
+        "gardener-controller-manager",
+        "gardener-controller-manager.garden",
+        "gardener-controller-manager.garden.svc",
+        "gardener-controller-manager.garden.svc.cluster",
+        "gardener-controller-manager.garden.svc.cluster.local"
+    ],
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+    ]
+}

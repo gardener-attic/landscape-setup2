@@ -33,7 +33,17 @@ else # install gardener
       -ca="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.crt" \
       -ca-key="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.key" \
       -config="$path_tls/ca-config.json" \
-      "$path_tls/gardener-apiserver-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
+      "$path_tls/$cert_names-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
+  fi
+  cert_names="gardener-controller-manager"
+  if [[ ! -f "$COMPONENT_STATE_HOME/tls/$cert_names-tls.pem" ]]; then
+    mkdir -p "$COMPONENT_STATE_HOME/tls"
+    cfssl gencert \
+      -profile=server \
+      -ca="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.crt" \
+      -ca-key="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.key" \
+      -config="$path_tls/ca-config.json" \
+      "$path_tls/$cert_names-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
   fi
 
   # render gardener helm chart values
