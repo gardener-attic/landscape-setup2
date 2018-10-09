@@ -31,27 +31,31 @@ fi
 case $arg in
     (cert) 
         # certificates
-        ./deploy.sh cert
+        deploy cert
         ;&
     (helm-tiller) 
         # helm-tiller
-        ./deploy.sh helm-tiller
+        deploy helm-tiller
         ;&
     (gardener) 
         # gardener
-        ./deploy.sh gardener
+        deploy gardener
         ;&
     (seed-config)
         # register garden cluster as seed cluster
-        ./deploy.sh seed-config
+        deploy seed-config
         ;&
     (identity)
         # identity
-        ./deploy.sh identity
+        deploy identity
         ;&
     (dashboard)
         # dashboard 
-        ./deploy.sh dashboard
+        deploy dashboard
+        ;&
+    (certmanager)
+        # certmanager 
+        deploy certmanager
         ;;
     (*)
         # something else

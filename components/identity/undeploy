@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "Removing sessionAffinity from kubernetes service ..."
-kubectl patch svc kubernetes --type json -p='[{"op": "remove", "path": "/spec/sessionAffinity"}]'
-kubectl get svc kubernetes -o yaml
+releases=$(helm list identity --output=json | jq ".Releases | length")
+if [ ${releases:-0} -ge 1 ]; then
+  helm delete --purge identity
+fi

@@ -34,7 +34,7 @@ image_tag=utils.find_by_key_value(config["charts"], "name", "gardener")["tag"]
 
 values={
   "apiserver": {
-    "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH"], "gen", "assets", "tls", "ca.crt")),
+    "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "cert", "ca.crt")),
     "image": {
       "tag": image_tag
     },
@@ -44,10 +44,10 @@ values={
     },
     "etcd": {
       "servers": args.etcd_server,
-      "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH"], "gen", "assets", "tls", "etcd-client-ca.crt")),
+      "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-ca.pem")),
       "tls": {
-        "crt": utils.read_file(os.path.join(os.environ["LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH"], "gen", "assets", "tls", "etcd-client.crt")),
-        "key": utils.read_file(os.path.join(os.environ["LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH"], "gen", "assets", "tls", "etcd-client.key"))
+        "crt": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-client.pem")),
+        "key": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-client-key.pem"))
       },
     }
   },
@@ -77,7 +77,7 @@ values={
       "server": {
         "https": {
           "tls": {
-            "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH"], "gen", "assets", "tls", "ca.crt")),
+            "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "cert", "ca.crt")),
             "crt": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls.pem")),
             "key": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls-key.pem"))
           }

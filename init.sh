@@ -28,6 +28,10 @@ export SETUP_REPO_PATH=${LANDSCAPE_HOME}/setup
 
 export KUBIFY_STATE_PATH=${LANDSCAPE_HOME}
 
+export KUBECONFIG=$KUBIFY_STATE_PATH/kubeconfig
+
+export HELM_HOME="$LANDSCAPE_HOME/.helm"
+
 export LANDSCAPE_SCRIPTS_HOME="${SETUP_REPO_PATH}/bin"
 
 export LANDSCAPE_CONFIG="$LANDSCAPE_HOME/landscape.yaml"
@@ -63,6 +67,10 @@ else
 fi
 
 source ${SETUP_REPO_PATH}/bin/common
+
+# autocompletion for deploy/undeploy
+complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" deploy
+complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" undeploy
 
 # export fail function and dependencies to be available in scripts
 export -f fail

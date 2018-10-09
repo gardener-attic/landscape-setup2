@@ -14,13 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
+force=
+if [ $# -gt 1 ] && [ $2 == "-y" ] ; then
+  force="-force"
+fi
 
-./deploy.sh kubify
+$KUBIFY_REPO_PATH/bin/tf destroy $force
 
-echo "Cluster successfully set up!"
-
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
-
-popd 1> /dev/null
+rm -rf $LANDSCAPE_STATE_HOME/etcd/etcd-ca.pem $LANDSCAPE_STATE_HOME/etcd/etcd-client.pem $LANDSCAPE_STATE_HOME/etcd/etcd-client-key.pem
+rmdir $LANDSCAPE_STATE_HOME/etcd &> /dev/null || true # will delete the etcd state folder if it's empty

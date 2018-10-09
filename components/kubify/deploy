@@ -25,7 +25,13 @@ $KUBIFY_REPO_PATH/bin/prepare $CLOUD_VARIANT
 echo "Kubify apply"
 $KUBIFY_REPO_PATH/bin/apply -y
 
-# wait until cluster  is completely running
-./wait_for_cluster.sh
+cp $KUBIFY_STATE_PATH/gen/assets/auth/kubeconfig $LANDSCAPE_HOME/kubeconfig
+mkdir -p $LANDSCAPE_STATE_HOME/etcd
+cp $KUBIFY_STATE_PATH/gen/assets/tls/etcd-client-ca.crt $LANDSCAPE_STATE_HOME/etcd/etcd-ca.pem
+cp $KUBIFY_STATE_PATH/gen/assets/tls/etcd-client.crt $LANDSCAPE_STATE_HOME/etcd/etcd-client.pem
+cp $KUBIFY_STATE_PATH/gen/assets/tls/etcd-client.key $LANDSCAPE_STATE_HOME/etcd/etcd-client-key.pem
 
-# what is this terraform directory about
+# wait until cluster  is completely running
+$COMPONENT_TEMPLATE_HOME/wait_for_cluster.sh
+
+echo "Cluster successfully set up!"

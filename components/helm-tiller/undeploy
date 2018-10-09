@@ -14,23 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pull latest version of the landscape instance
-echo "Updating landscape instance from git..."
-(
-  cd "$LANDSCAPE_HOME"
-  git pull --ff-only
-  git submodule update --init --recursive
-)
-
-# activate potential changes from upstream
-echo "Activating potential changes from upstream..."
-current="$LANDSCAPE_HOME"
-source "$current/setup/scripts/deactivate"
-source "$current/setup/scripts/activate"
-unset current
-
-# update tools unless explicitly instructed not to
-if [[ ! "$TOOLS" == "false" ]]; then
-  echo "Installing tools..."
-  TOOLS=true deploy tools
-fi
+kubectl -n kube-system delete deployment tiller-deploy --ignore-not-found
+kubectl delete clusterrolebinding tiller --ignore-not-found
+kubectl -n kube-system delete serviceaccount tiller --ignore-not-found
+kubectl -n kube-system delete service tiller-deploy --ignore-not-found
