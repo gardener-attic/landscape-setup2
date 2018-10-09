@@ -1,0 +1,14 @@
+{
+  "CN": "Gardener CA",
+  "key": {
+    "algo": "rsa",
+    "size": 4096
+  },
+  "names": [
+    {
+      "C": "DE",
+      "O": "Gardener",
+      "OU": "CA"
+    }
+  ]
+}

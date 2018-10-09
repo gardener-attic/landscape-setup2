@@ -30,8 +30,8 @@ else # install gardener
     mkdir -p "$COMPONENT_STATE_HOME/tls"
     cfssl gencert \
       -profile=server \
-      -ca="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.crt" \
-      -ca-key="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.key" \
+      -ca="$LANDSCAPE_STATE_HOME/cert/ca.crt" \
+      -ca-key="$LANDSCAPE_STATE_HOME/cert/ca.key" \
       -config="$path_tls/ca-config.json" \
       "$path_tls/$cert_names-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
   fi
@@ -40,8 +40,8 @@ else # install gardener
     mkdir -p "$COMPONENT_STATE_HOME/tls"
     cfssl gencert \
       -profile=server \
-      -ca="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.crt" \
-      -ca-key="$LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH/gen/assets/tls/ca.key" \
+      -ca="$LANDSCAPE_STATE_HOME/cert/ca.crt" \
+      -ca-key="$LANDSCAPE_STATE_HOME/cert/ca.key" \
       -config="$path_tls/ca-config.json" \
       "$path_tls/$cert_names-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
   fi

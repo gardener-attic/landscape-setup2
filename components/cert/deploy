@@ -15,6 +15,7 @@
 # limitations under the License.
 
 if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall cert
+    kubectl delete csr ca-csr --ignore-not-found
     rm -rf $COMPONENT_STATE_HOME
 else # install cert
     python generate-values.py > "$COMPONENT_STATE_HOME/csr.json"
@@ -22,11 +23,22 @@ else # install cert
     if [ ! -f "$COMPONENT_STATE_HOME/ca-config.json" ] ; then
         cp "${COMPONENT_TEMPLATE_HOME}/ca-config.json" "$COMPONENT_STATE_HOME/ca-config.json"
     fi
+    if [ ! -f "$COMPONENT_STATE_HOME/ca-csr.json" ] ; then
+        cp "${COMPONENT_TEMPLATE_HOME}/ca-csr.json" "$COMPONENT_STATE_HOME/ca-csr.json"
+    fi
+
+    if [ ! -f ${COMPONENT_STATE_HOME}/ca.crt ] ; then
+        cfssl gencert -initca ${COMPONENT_STATE_HOME}/ca-csr.json | cfssljson -bare ca
+
+        mv ${COMPONENT_TEMPLATE_HOME}/ca-key.pem ${COMPONENT_STATE_HOME}/ca.key
+        mv ${COMPONENT_TEMPLATE_HOME}/ca.pem ${COMPONENT_STATE_HOME}/ca.crt
+        mv ${COMPONENT_TEMPLATE_HOME}/ca.csr ${COMPONENT_STATE_HOME}/ca.csr
+    fi
 
     if [ ! -f ${COMPONENT_STATE_HOME}/tls.crt ] ; then
-        cfssl gencert -ca=${KUBIFY_STATE_PATH}/gen/assets/tls/ca.crt -ca-key=${KUBIFY_STATE_PATH}/gen/assets/tls/ca.key -config=${COMPONENT_STATE_HOME}/ca-config.json -profile=server ${COMPONENT_STATE_HOME}/csr.json | cfssljson -bare server
+        cfssl gencert -ca=${COMPONENT_STATE_HOME}/ca.crt -ca-key=${COMPONENT_STATE_HOME}/ca.key -config=${COMPONENT_STATE_HOME}/ca-config.json -profile=server ${COMPONENT_STATE_HOME}/csr.json | cfssljson -bare server
         mv ${COMPONENT_TEMPLATE_HOME}/server-key.pem ${COMPONENT_STATE_HOME}/tls.key
-        cat ${COMPONENT_TEMPLATE_HOME}/server.pem ${KUBIFY_STATE_PATH}/gen/assets/tls/ca.crt >${COMPONENT_STATE_HOME}/tls.crt
+        cat ${COMPONENT_TEMPLATE_HOME}/server.pem ${COMPONENT_STATE_HOME}/ca.crt >${COMPONENT_STATE_HOME}/tls.crt
         rm ${COMPONENT_TEMPLATE_HOME}/server.pem
         mv ${COMPONENT_TEMPLATE_HOME}/server.csr ${COMPONENT_STATE_HOME}/tls.csr
     fi
