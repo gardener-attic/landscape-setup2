@@ -73,6 +73,15 @@ values={
         "seed": {
           "reserveExcessCapacity": False,
         }
+      },
+      "server": {
+        "https": {
+          "tls": {
+            "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_ACTIVE_CLUSTER_REPO_PATH"], "gen", "assets", "tls", "ca.crt")),
+            "crt": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls.pem")),
+            "key": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls-key.pem"))
+          }
+        }
       }
     }
   }
