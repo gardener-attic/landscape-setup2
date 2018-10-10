@@ -98,7 +98,7 @@ else
     --wait \
     --namespace \
     certmanager cert-manager stable/cert-manager \
-    --version v0.3.0
+    --version v0.5.0
 
     # install certificate manager issuer
     kubectl apply -f ${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
