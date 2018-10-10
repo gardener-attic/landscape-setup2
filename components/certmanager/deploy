@@ -14,6 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+wait_for_apiserver() {
+    debug "Checking if apiserver is ready ..."
+    uptodate=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.updatedNumberScheduled}')
+    ready=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.numberReady}')
+    while [[ $uptodate -lt 1 ]] || [[ $ready -lt 1 ]] ; do
+        # wait until new apiserver is ready
+        debug "Waiting until apiserver is ready ..."
+        sleep 10
+        uptodate=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.updatedNumberScheduled}')
+        ready=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.numberReady}')
+    done
+}
+
+# test if there is only one master node
+if [ $(kubectl get nodes --selector='node-role.kubernetes.io/master=' --no-headers | wc -l) -le 1 ] ; then
+    single_master="yes"
+else 
+    single_master="" # empty string is evaluated to false in test statement
+fi
+
 if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certmanager
     # delete certmanager
     helm delete --purge cert-manager
@@ -33,7 +53,14 @@ if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certm
             ((pos=$pos+1)) # add 1 to position of apiserver line to compute patch position
         fi
         # patch line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' into kube-apiserver again
+        if [ $single_master ] ; then
+            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh start
+        fi
         kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/'$pos'", "value": "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}]'
+        if [ $single_master ] ; then
+            wait_for_apiserver
+            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh stop
+        fi
     fi
 
     # patch dashboard and ingress 
@@ -94,15 +121,6 @@ else
             -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
     fi
 
-    # find position of the line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' and save the array position of that entry within the yaml to variable
-    pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
-    if [ $pos ]; then
-        # delete that entry
-        kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
-    else
-        echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
-    fi
-
     # wait until secrets have been recreated
     max_retry_time=300
     retry_stop=$(($(date +%s) + max_retry_time))
@@ -117,5 +135,21 @@ else
     done
     if ! $success; then
         fail "Secrets gardener-dashboard-tls and identity-tls not created within $max_retry_time seconds!"
+    fi
+
+    # find position of the line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' and save the array position of that entry within the yaml to variable
+    pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
+    if [ $pos ]; then
+        # delete that entry
+        if [ $single_master ] ; then
+            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh start
+        fi
+        kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
+        if [ $single_master ] ; then
+            wait_for_apiserver
+            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh stop
+        fi
+    else
+        echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
     fi
 fi
