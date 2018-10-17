@@ -17,9 +17,6 @@
 # source color functions
 source "$LANDSCAPE_SCRIPTS_HOME/lib/colors"
 
-# source bash stack
-source "$LANDSCAPE_SCRIPTS_HOME/lib/stack"
-
 # source terraform convenience functions
 source "$LANDSCAPE_SCRIPTS_HOME/lib/terraform"
 
