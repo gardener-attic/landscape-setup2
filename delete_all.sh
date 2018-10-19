@@ -14,19 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-shoots=$(kubectl get shoots --all-namespaces -o json)
-len=$(echo "$shoots" | jq ".items | length")
+resource_name=$1
+
+resources=$(kubectl get $resource_name --all-namespaces -o json)
+len=$(echo "$resources" | jq ".items | length")
 
 if [ $len -eq 0 ] ; then
-    echo "No shoots found!"
+    echo "No $resource_name found!"
+    exit 0
 fi
 
 for i in $(seq 0 $((len - 1))); do # go from 0 to len-1
-    shoot_name=$(echo "$shoots" | jq -r ".items[$i].metadata.name")
-    shoot_namespace=$(echo "$shoots" | jq -r ".items[$i].metadata.namespace")
+    name=$(echo "$resources" | jq -r ".items[$i].metadata.name")
+    namespace=$(echo "$resources" | jq -r ".items[$i].metadata.namespace")
 
-    echo "Deleting shoot $shoot_name in namespace $shoot_namespace ..."
-    $GARDENER_REPO_PATH/hack/delete-shoot $shoot_name $shoot_namespace 1> /dev/null & # allow for parallel shoot deletion
+    echo -n "Deleting '$name' "
+    if [[ $namespace ]] ; then
+        echo -n "in namespace '$namespace' "
+    fi
+    echo "..."
+    $GARDENER_REPO_PATH/hack/delete $resource_name $name $namespace 1> /dev/null & # allow for parallel resource deletion
 done
 
-wait # wait until all shoots are deleted
+wait # wait until all resources are deleted

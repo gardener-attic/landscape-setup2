@@ -34,10 +34,12 @@ case $arg in
         ;&
     (gardener)
         echo "Deleting remaining shoots, if any ..."
-        $SETUP_REPO_PATH/delete_all_shoots.sh
+        $SETUP_REPO_PATH/delete_all.sh shoots
         if [ $(kubectl get shoots --all-namespaces 2> /dev/null | wc -l) -gt 0 ] ; then
             fail "It seems there are still shoots left! Undeploy has been stopped."
         fi 
+        echo "Deleting remaining projects, if any ..."
+        $SETUP_REPO_PATH/delete_all.sh projects
         ;;
 esac
 
