@@ -2,6 +2,8 @@
 
 This is the installation manual for a simple Gardener setup. It is part of the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
 
+We do recommend this simplified setup for demonstration purposes only. For productive workloads we do recommend that all components (Gardener/Seed/Shoot) run in their own IaaS accounts and that network policies are enabled and properly tested on the seed clusters.
+
 
 # Prerequisites
 
