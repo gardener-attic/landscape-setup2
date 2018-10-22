@@ -68,6 +68,10 @@ fi
 
 source ${SETUP_REPO_PATH}/bin/common
 
+# autocompletion for deploy/undeploy
+complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" deploy
+complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" undeploy
+
 # export fail function and dependencies to be available in scripts
 export -f fail
 export -f error
