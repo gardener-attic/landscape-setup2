@@ -14,4 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-helm delete --purge dashboard 
+releases=$(helm list dashboard --output=json | jq ".Releases | length")
+if [ ${releases:-0} -ge 1 ]; then
+  helm delete --purge dashboard
+fi

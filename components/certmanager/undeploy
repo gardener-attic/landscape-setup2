@@ -26,7 +26,10 @@ if [ "$identity_issuer" = "letsencrypt" ] ; then
 fi
 
 # delete certmanager
-helm delete --purge cert-manager
+releases=$(helm list cert-manager --output=json | jq ".Releases | length")
+if [ ${releases:-0} -ge 1 ]; then
+  helm delete --purge cert-manager
+fi
 if [ -f $COMPONENT_STATE_HOME/cert-manager-issuer.yaml ] ; then
   kubectl delete -f $COMPONENT_STATE_HOME/cert-manager-issuer.yaml --ignore-not-found
 fi

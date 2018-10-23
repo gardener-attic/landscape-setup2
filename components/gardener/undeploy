@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-helm delete --purge gardener
+releases=$(helm list gardener --output=json | jq ".Releases | length")
+if [ ${releases:-0} -ge 1 ]; then
+  helm delete --purge gardener
+fi
 kubectl delete namespace garden --ignore-not-found
 rm -rf ~/.kube # clear kubectl cache to prevent error on next call
