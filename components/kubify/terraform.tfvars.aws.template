@@ -55,7 +55,6 @@ oidc_issuer_subdomain = "${misc["oidc_issuer_subdomain"]}"
 oidc_client_id = "${misc["oidc_client_id"]}"
 oidc_username_claim = "${misc["oidc_username_claim"]}"
 oidc_groups_claim = "${misc["oidc_groups_claim"]}"
-oidc_use_cluster_ca = true
 subnet_cidr = "${misc["subnet_cidr"]}"
 service_cidr = "${misc["service_cidr"]}"
 pod_cidr = "${misc["pod_cidr"]}"

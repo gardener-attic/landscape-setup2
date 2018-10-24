@@ -14,142 +14,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-wait_for_apiserver() {
-    debug "Checking if apiserver is ready ..."
-    uptodate=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.updatedNumberScheduled}')
-    ready=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.numberReady}')
-    while [[ $uptodate -lt 1 ]] || [[ $ready -lt 1 ]] ; do
-        # wait until new apiserver is ready
-        debug "Waiting until apiserver is ready ..."
-        sleep 10
-        uptodate=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.updatedNumberScheduled}')
-        ready=$(kubectl -n kube-system get ds kube-apiserver -o jsonpath='{.status.numberReady}')
-    done
-}
+certmanager_config="$(read_landscape_config '.charts[] | select(.name=="certmanager")')"
 
-# test if there is only one master node
-if [ $(kubectl get nodes --selector='node-role.kubernetes.io/master=' --no-headers | wc -l) -le 1 ] ; then
-    single_master="yes"
-else 
-    single_master="" # empty string is evaluated to false in test statement
+# render issuer file
+mako-render ${COMPONENT_TEMPLATE_HOME}/cert-manager-issuer.yaml.tmpl >${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+
+# install certificate manger
+helm upgrade --install \
+--force \
+--wait \
+--namespace certmanager \
+cert-manager stable/cert-manager \
+--version "$(jq -r '.version' <<< "$certmanager_config")"
+
+# install certificate manager issuer
+kubectl apply -f ${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
+
+# remove existing certificates (they will not be overwritten)
+
+kubectl -n garden delete secret gardener-dashboard-tls --ignore-not-found
+kubectl -n kube-system delete secret identity-tls --ignore-not-found
+
+# patch dashboard and ingress 
+dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+if [ "$dashboard_issuer" != "letsencrypt" ] ; then
+    kubectl -n garden annotate ingress gardener-dashboard-ingress certmanager.k8s.io/cluster-issuer=letsencrypt certmanager.k8s.io/acme-dns01-provider=route53-dns certmanager.k8s.io/acme-challenge-type=dns01
 fi
 
-if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall certmanager
-    # delete certmanager
-    helm delete --purge cert-manager
+identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
+if [ "$identity_issuer" != "letsencrypt" ] ; then
+    kubectl -n kube-system annotate ingress identity-ingress certmanager.k8s.io/cluster-issuer=letsencrypt certmanager.k8s.io/acme-dns01-provider=route53-dns certmanager.k8s.io/acme-challenge-type=dns01
+fi
 
-    # check if oidc-ca-file line is already there, add it if not
-    pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
-    if [ -z $pos ]; then # line "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt" not found, insert it
-        # find apiserver line to locate patch position
-        pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "apiserver"}}{{$i}}{{end}}{{end}}')
-        if [ -z $pos ]; then
-            if [ $# -gt 3 ] && [ $3 == "--patch-position" ]; then # manually specified patch position
-                pos=$4
-            else
-                fail "Line \"apiserver\" not found in daemonset kube-apiserver! To manually specify the patch position (line below apiserver line), give \"--patch-position <position>\" as additional parameters."
-            fi
-        else 
-            ((pos=$pos+1)) # add 1 to position of apiserver line to compute patch position
-        fi
-        # patch line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' into kube-apiserver again
-        if [ $single_master ] ; then
-            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh start
-        fi
-        kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "add", "path": "/spec/template/spec/containers/0/command/'$pos'", "value": "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}]'
-        if [ $single_master ] ; then
-            wait_for_apiserver
-            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh stop
-        fi
+# wait until secrets have been recreated
+max_retry_time=300
+retry_stop=$(($(date +%s) + max_retry_time))
+success=false
+while [[ $(date +%s) -lt $retry_stop ]]; do
+    sleep 10
+    if $(kubectl -n garden get secret gardener-dashboard-tls &> /dev/null) && $(kubectl -n kube-system get secret identity-tls &> /dev/null); then
+    success=true
+    break;
     fi
-
-    # patch dashboard and ingress 
-    identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
-    if [ "$identity_issuer" = "letsencrypt" ] ; then
-        kubectl -n kube-system patch ingress identity-ingress --type merge \
-            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-delete-patch.yaml)"
-    fi
-    
-    dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
-    if [ "$dashboard_issuer" = "letsencrypt" ] ; then
-        kubectl -n garden patch ingress gardener-dashboard-ingress --type merge \
-            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-delete-patch.yaml)"
-    fi
-
-    # delete letsencrypt secrets
-    kubectl -n garden delete secret gardener-dashboard-tls --ignore-not-found
-    kubectl -n kube-system delete secret identity-tls  --ignore-not-found
-
-    # restore certificates by deploying identity and dashboard again
-    # TODO find better solution
-    $LANDSCAPE_COMPONENTS_HOME/deploy.sh identity
-    $LANDSCAPE_COMPONENTS_HOME/deploy.sh dashboard
-
-    # delete certmanager stuff
-    kubectl delete ns certmanager
-    rm -rf $COMPONENT_STATE_HOME
-else
-    # render issuer file
-    mako-render ${COMPONENT_TEMPLATE_HOME}/cert-manager-issuer.yaml.tmpl >${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
-
-    # install certificate manger
-    helm upgrade --install \
-    --force \
-    --wait \
-    --namespace \
-    certmanager cert-manager stable/cert-manager \
-    --version v0.5.0
-
-    # install certificate manager issuer
-    kubectl apply -f ${COMPONENT_STATE_HOME}/cert-manager-issuer.yaml
-
-    # remove existing certificates (they will not be overwritten)
-
-    kubectl -n garden delete secret gardener-dashboard-tls
-    kubectl -n kube-system delete secret identity-tls  
-
-    # patch dashboard and ingress 
-    dashboard_issuer=$(kubectl get ingress -n garden  gardener-dashboard-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
-    if [ "$dashboard_issuer" != "letsencrypt" ] ; then
-        kubectl -n garden patch ingress gardener-dashboard-ingress \
-            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
-    fi
-
-    identity_issuer=$(kubectl get ingress -n kube-system  identity-ingress -o jsonpath="{.metadata.annotations.certmanager\.k8s\.io/cluster-issuer}")
-    if [ "$identity_issuer" != "letsencrypt" ] ; then
-        kubectl -n kube-system patch ingress identity-ingress \
-            -p="$(cat ${COMPONENT_TEMPLATE_HOME}/issuer-patch.yaml)"
-    fi
-
-    # wait until secrets have been recreated
-    max_retry_time=300
-    retry_stop=$(($(date +%s) + max_retry_time))
-    success=false
-    while [[ $(date +%s) -lt $retry_stop ]]; do
-        sleep 10
-        if $(kubectl -n garden get secret gardener-dashboard-tls &> /dev/null) && $(kubectl -n kube-system get secret identity-tls &> /dev/null); then
-        success=true
-        break;
-        fi
-        debug "Secrets gardener-dashboard-tls and identity-tls not recreated yet. Waiting ..."
-    done
-    if ! $success; then
-        fail "Secrets gardener-dashboard-tls and identity-tls not created within $max_retry_time seconds!"
-    fi
-
-    # find position of the line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' and save the array position of that entry within the yaml to variable
-    pos=$(kubectl -n kube-system get -o template ds kube-apiserver --template='{{range $i, $elem := (index .spec.template.spec.containers 0).command}}{{if eq $elem "--oidc-ca-file=/etc/kubernetes/secrets/ca.crt"}}{{$i}}{{end}}{{end}}')
-    if [ $pos ]; then
-        # delete that entry
-        if [ $single_master ] ; then
-            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh start
-        fi
-        kubectl -n kube-system patch ds kube-apiserver --type json -p='[{"op": "remove", "path": "/spec/template/spec/containers/0/command/'$pos'"}]'
-        if [ $single_master ] ; then
-            wait_for_apiserver
-            $COMPONENT_TEMPLATE_HOME/bootstrap_apiserver.sh stop
-        fi
-    else
-        echo "INFO: Line '--oidc-ca-file=/etc/kubernetes/secrets/ca.crt' not found in daemonset kube-apiserver."
-    fi
+    debug "Secrets gardener-dashboard-tls and identity-tls not recreated yet. Waiting ..."
+done
+if ! $success; then
+    fail "Secrets gardener-dashboard-tls and identity-tls not created within $max_retry_time seconds!"
 fi
