@@ -14,9 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy.sh kubify
+force=
+if [ $# -gt 1 ] && [ $2 == "-y" ] ; then
+  force="-force"
+fi
 
-echo "Cluster successfully set up!"
+$KUBIFY_REPO_PATH/bin/tf destroy $force
 
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
+rm -rf $LANDSCAPE_STATE_HOME/etcd/etcd-ca.pem $LANDSCAPE_STATE_HOME/etcd/etcd-client.pem $LANDSCAPE_STATE_HOME/etcd/etcd-client-key.pem
+rmdir $LANDSCAPE_STATE_HOME/etcd &> /dev/null || true # will delete the etcd state folder if it's empty

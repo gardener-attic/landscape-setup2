@@ -14,34 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# evaluate args
-uninstall=false
-i=0
-seeds=()
-if [ $# -gt 1 ]; then
-    for arg in "${@:2}"; do
-        if [ $arg == "-u" -o $arg == "--uninstall" ]; then
-            uninstall=true
-        elif [ $arg == "aws" -o $arg == "openstack" -o $arg == "az" -o $arg == "gcp" ]; then
-            seeds[$((i++))]=$arg
-        else 
-            echo "Unknown seed-config argument: $arg"
-            exit 1
-        fi
-    done
-fi
-
-# read seeds from landscape config if not specified in args
-if [ $i -eq 0 ]; then 
-    for seed in $(read_landscape_config '.seed_config.seeds[]'); do
-        seeds[$((i++))]=$seed
-    done
-fi
-
-# do not proceed if no seeds have been specified
-if [ ${#seeds[@]} -eq 0 ]; then 
-    fail "No seeds defined (neither in landscape config, nor in arguments)!"
-fi
+shift # eat "seed-config" argument given do deploy/undeploy script
+source $COMPONENT_TEMPLATE_HOME/get_seeds.sh
 
 # render files for all specified seeds
 for seed in "${seeds[@]}"; do
@@ -56,21 +30,10 @@ for seed in "${seeds[@]}"; do
 done
 
 # iterate over all files in the state folder that belong to specified seeds
-# deploy or delete resources
-if $uninstall; then # uninstall seed-config
-    for seed in "${seeds[@]}"; do
-        for i in $(ls -r ${COMPONENT_STATE_HOME}/*$seed.yaml); do # iterate over files in reverse order
-            kubectl delete -f $i --ignore-not-found
-            rm -f $i
-        done
+# deploy resources
+for seed in "${seeds[@]}"; do
+    for i in ${COMPONENT_STATE_HOME}/*$seed.yaml ; do
+        echo deploying $i
+        kubectl apply -f $i
     done
-    rmdir $COMPONENT_STATE_HOME &> /dev/null || true # will delete the state folder if it's empty
-else # install seed-config
-    for seed in "${seeds[@]}"; do
-        for i in ${COMPONENT_STATE_HOME}/*$seed.yaml ; do
-            echo deploying $i
-            kubectl apply -f $i
-        done
-    done
-fi
-
+done

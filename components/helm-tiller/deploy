@@ -14,17 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if [ $# -gt 1 ] && [ $2 == "-u" -o $2 == "--uninstall" ]; then # uninstall tiller
-  kubectl -n kube-system delete deployment tiller-deploy
-  kubectl delete clusterrolebinding tiller --ignore-not-found
-  kubectl -n kube-system delete serviceaccount tiller --ignore-not-found
-  kubectl -n kube-system delete service tiller-deploy --ignore-not-found
-  rm -rf $COMPONENT_STATE_HOME
-else # initialize helm
-  kubectl -n kube-system get serviceaccount tiller || \
-    kubectl -n kube-system create serviceaccount tiller
-  kubectl get clusterrolebinding tiller || \
-    kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
+  kubectl -n kube-system get serviceaccount tiller || kubectl -n kube-system create serviceaccount tiller
+  kubectl get clusterrolebinding tiller || kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
   helm init --upgrade --wait --service-account tiller
-fi
-

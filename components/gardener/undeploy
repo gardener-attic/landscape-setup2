@@ -14,9 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy.sh kubify
-
-echo "Cluster successfully set up!"
-
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
+helm delete --purge gardener
+kubectl delete namespace garden --ignore-not-found
+rm -rf ~/.kube # clear kubectl cache to prevent error on next call

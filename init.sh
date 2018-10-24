@@ -28,7 +28,9 @@ export SETUP_REPO_PATH=${LANDSCAPE_HOME}/setup
 
 export KUBIFY_STATE_PATH=${LANDSCAPE_HOME}
 
-export KUBECONFIG=$KUBIFY_STATE_PATH/gen/assets/auth/kubeconfig
+export KUBECONFIG=$KUBIFY_STATE_PATH/kubeconfig
+
+export HELM_HOME="$LANDSCAPE_HOME/.helm"
 
 export LANDSCAPE_SCRIPTS_HOME="${SETUP_REPO_PATH}/bin"
 

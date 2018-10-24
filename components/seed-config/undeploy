@@ -14,9 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy.sh kubify
+shift # eat "seed-config" argument given do deploy/undeploy script
+source $COMPONENT_TEMPLATE_HOME/get_seeds.sh
 
-echo "Cluster successfully set up!"
-
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
+# iterate over all files in the state folder that belong to specified seeds
+# delete resources
+for seed in "${seeds[@]}"; do
+    for i in $(ls -r ${COMPONENT_STATE_HOME}/*$seed.yaml); do # iterate over files in reverse order
+        kubectl delete -f $i --ignore-not-found
+        rm -f $i
+    done
+done
+rmdir $COMPONENT_STATE_HOME &> /dev/null || true # will delete the state folder if it's empty

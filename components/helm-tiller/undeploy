@@ -14,9 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-deploy.sh kubify
-
-echo "Cluster successfully set up!"
-
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
+kubectl -n kube-system delete deployment tiller-deploy --ignore-not-found
+kubectl delete clusterrolebinding tiller --ignore-not-found
+kubectl -n kube-system delete serviceaccount tiller --ignore-not-found
+kubectl -n kube-system delete service tiller-deploy --ignore-not-found

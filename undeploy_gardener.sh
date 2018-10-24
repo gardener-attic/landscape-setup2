@@ -26,6 +26,8 @@ fi
 # this is done before so that e.g. the dashboard is not deleted
 # in case something with the shoot deletion doesn't work.
 case $arg in 
+    (certmanager)
+        ;&
     (dashboard)
         ;&
     (identity)
@@ -46,30 +48,34 @@ esac
 # remove components
 echo "Removing components..."
 case $arg in
+    (certmanager)
+        # certmanager 
+        undeploy dashboard
+        ;&
     (dashboard)
         # dashboard 
-        ./deploy.sh dashboard --uninstall
+        undeploy dashboard
         ;&
     (identity)
         # identity
-        ./deploy.sh identity --uninstall
+        undeploy identity
         ;&
     (seed-config)
         # register garden cluster as seed cluster
         # workaround: will delete all possible seeds, even if not created
-        ./deploy.sh seed-config --uninstall aws az gcp openstack
+        undeploy seed-config aws az gcp openstack
         ;&
     (gardener) 
         # gardener
-        ./deploy.sh gardener --uninstall
+        undeploy gardener
         ;&
     (helm-tiller) 
         # helm-tiller
-        ./deploy.sh helm-tiller --uninstall
+        undeploy helm-tiller
         ;&
     (cert) 
         # certificates
-        ./deploy.sh cert --uninstall
+        undeploy cert
         ;;
     (*)
         # something else
