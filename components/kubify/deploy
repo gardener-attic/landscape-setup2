@@ -32,4 +32,9 @@ cp $KUBIFY_STATE_PATH/gen/assets/tls/etcd-client.crt $LANDSCAPE_STATE_HOME/etcd/
 cp $KUBIFY_STATE_PATH/gen/assets/tls/etcd-client.key $LANDSCAPE_STATE_HOME/etcd/etcd-client-key.pem
 
 # wait until cluster  is completely running
-./wait_for_cluster.sh
+$COMPONENT_TEMPLATE_HOME/wait_for_cluster.sh
+
+echo "Cluster successfully set up!"
+
+echo ""
+$COMPONENT_TEMPLATE_HOME/session_affinity_fix.sh
