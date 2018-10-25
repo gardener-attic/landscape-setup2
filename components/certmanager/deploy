@@ -47,11 +47,11 @@ if [ "$identity_issuer" != "letsencrypt" ] ; then
 fi
 
 # wait until secrets have been recreated
-max_retry_time=300
+max_retry_time=600
 retry_stop=$(($(date +%s) + max_retry_time))
 success=false
 while [[ $(date +%s) -lt $retry_stop ]]; do
-    sleep 10
+    sleep 30
     if $(kubectl -n garden get secret gardener-dashboard-tls &> /dev/null) && $(kubectl -n kube-system get secret identity-tls &> /dev/null); then
     success=true
     break;
