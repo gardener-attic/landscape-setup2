@@ -85,3 +85,11 @@ function clone_repository() {
     popd 1> /dev/null
   fi
 }
+
+# 1st argument: delimiter
+# 2nd argument: variable name to put result into
+# 3rd argument: arg to split (a:b:c:...)
+# returns array [a, b, c, ...] in specified variable
+function parse_args_list() {
+  IFS="$1" read -ra "$2" <<< "$3"
+}

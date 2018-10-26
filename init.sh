@@ -72,6 +72,10 @@ source ${SETUP_REPO_PATH}/bin/common
 complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" deploy
 complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" undeploy
 
+# component order for the all deploy/undeploy script
+export COMPONENT_ORDER_KUBIFY="kubify,cert,helm-tiller,gardener,seed-config,identity,dashboard,certmanager"
+export COMPONENT_ORDER_CUSTOM="etcd,cert,helm-tiller,gardener,seed-config,identity,dashboard,cname,certmanager"
+
 # export fail function and dependencies to be available in scripts
 export -f fail
 export -f error

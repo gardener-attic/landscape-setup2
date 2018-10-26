@@ -37,7 +37,8 @@ if [[ ! -f "$COMPONENT_STATE_HOME/tls/$cert_names-tls.pem" ]]; then
     "$path_tls/$cert_names-config.json" | cfssljson -bare "$COMPONENT_STATE_HOME/tls/$cert_names-tls"
 fi
 
-etcd_server=$(read_landscape_config .etcd.server)
+base=$(read_landscape_config .clusters.base_cluster)
+etcd_server=$(read_landscape_config .etcd.server.${base})
 
 # render gardener helm chart values
 python generate-values.py --gardener-repo-path="$GARDENER_REPO_PATH" --etcd-server=$etcd_server > "$COMPONENT_STATE_HOME/values.yaml"
