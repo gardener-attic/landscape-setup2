@@ -62,3 +62,19 @@ kubectl apply -f $COMPONENT_STATE_HOME/etcd-secrets.yaml
 # deploy etcd
 mako-render $COMPONENT_TEMPLATE_HOME/etcd-manifest.yaml.tmpl --var namespace=$etcd_namespace > $COMPONENT_STATE_HOME/etcd-manifest.yaml
 kubectl apply -f $COMPONENT_STATE_HOME/etcd-manifest.yaml
+
+# wait until etcd ready
+max_retry_time=300
+retry_stop=$(($(date +%s) + max_retry_time))
+success=false
+while [[ $(date +%s) -lt $retry_stop ]]; do
+  sleep 5
+  if [[ $(kubectl -n $etcd_namespace get pod etcd-0 -o jsonpath={.status.phase} 2> /dev/null) = "Running" ]] ; then
+    success=true
+    break;
+  fi
+  debug "Waiting for etcd pod to become running ..."
+done
+if ! $success; then
+  fail "The etcd pod did not become running within $max_retry_time seconds!"
+fi
