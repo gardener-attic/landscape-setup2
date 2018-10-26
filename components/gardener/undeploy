@@ -14,11 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+echo "Deleting remaining shoots, if any ..."
+$SETUP_REPO_PATH/delete_all.sh shoots 2> /dev/null || true
+if [ $(kubectl get shoots --all-namespaces 2> /dev/null | wc -l) -gt 0 ] ; then
+    fail "It seems there are still shoots left! Undeploy has been stopped."
+fi 
+echo "Deleting remaining projects, if any ..."
+$SETUP_REPO_PATH/delete_all.sh projects 2> /dev/null || true
+
+# helm will also delete the validatingwebhookconfiguration, but sometimes not fast enough, therefore the manual call that waits until it is deleted
+kubectl delete validatingwebhookconfiguration validate-namespace-deletion --ignore-not-found 
+
 releases=$(helm list gardener --output=json | jq ".Releases | length")
 if [ ${releases:-0} -ge 1 ]; then
   helm delete --purge gardener
 fi
-# helm will also delete the validatingwebhookconfiguration, but sometimes not fast enough, therefore the manual call that waits until it is deleted
-kubectl delete validatingwebhookconfiguration validate-namespace-deletion --ignore-not-found 
 kubectl delete namespace garden --ignore-not-found
 rm -rf ~/.kube # clear kubectl cache to prevent error on next call

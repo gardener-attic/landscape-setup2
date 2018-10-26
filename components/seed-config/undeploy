@@ -14,13 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+echo "Deleting remaining shoots, if any ..."
+$SETUP_REPO_PATH/delete_all.sh shoots
+if [ $(kubectl get shoots --all-namespaces 2> /dev/null | wc -l) -gt 0 ] ; then
+    fail "It seems there are still shoots left! Undeploy has been stopped."
+fi 
+echo "Deleting remaining projects, if any ..."
+$SETUP_REPO_PATH/delete_all.sh projects
+
 shift # eat "seed-config" argument given do deploy/undeploy script
 source $COMPONENT_TEMPLATE_HOME/get_seeds.sh
 
 # iterate over all files in the state folder that belong to specified seeds
 # delete resources
 for seed in "${seeds[@]}"; do
-    for i in $(ls -r ${COMPONENT_STATE_HOME}/*$seed.yaml); do # iterate over files in reverse order
+    for i in $(ls -r ${COMPONENT_STATE_HOME}/*$seed.yaml 2> /dev/null); do # iterate over files in reverse order
         kubectl delete -f $i --ignore-not-found
         rm -f $i
     done
