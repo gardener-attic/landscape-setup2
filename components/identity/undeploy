@@ -18,3 +18,6 @@ releases=$(helm list identity --output=json | jq ".Releases | length")
 if [ ${releases:-0} -ge 1 ]; then
   helm delete --purge identity
 fi
+
+# delete clusterrolebinding again
+kubectl delete clusterrolebinding garden.sapcloud.io:system:project-creation --ignore-not-found
