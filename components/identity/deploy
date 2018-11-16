@@ -58,3 +58,19 @@ helm upgrade --install \
 --namespace kube-system \
 identity \
 "$identity_repo_path/$(jq -r '.path' <<< "$identity_config")"
+
+# add clusterrolebinding to enable project creation in dashboard
+cat << EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: garden.sapcloud.io:system:project-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: garden.sapcloud.io:system:project-creation
+subjects:
+- apiGroup: rbac.authorization.k8s.io
+  kind: Group
+  name: system:authenticated
+EOF
