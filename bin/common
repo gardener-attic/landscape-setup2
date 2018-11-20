@@ -93,3 +93,67 @@ function clone_repository() {
 function parse_args_list() {
   IFS="$1" read -ra "$2" <<< "$3"
 }
+
+
+# 1st argument: submodule to manage ('gardener' or 'dashboard')
+# This basically compares the tag specified in the landscape_base.yaml file 
+# for the submodule and the VERSION file in that submodule's repo folder. 
+# If the submodule doesn't exist or the versions don't match, the module 
+# is updated and the specified version is checked out.
+function manage_submodule() {
+    pushd $LANDSCAPE_HOME 1> /dev/null
+    module=$(echo $1 | tr '[:upper:]' '[:lower:]') # module in lowercase
+    module_upper=$(echo $module | tr '[:lower:]' '[:upper:]') # module in uppercase
+    repo_name=${module_upper}_REPO_PATH
+    repo=${!repo_name}
+
+    tag=$(read_landscape_config '.charts[] | select(.name=="'$module'") | .tag')
+    echo "Specified version for module $module: $tag"
+    update=0 # marks whether a git checkout has to be performed
+
+    if [[ ! -d $repo ]] ; then
+        # submodule not checked out yet
+        case $module in 
+        (gardener)
+            repo_path="https://github.com/gardener/gardener.git"
+            module_name="gardener"
+            ;;
+        (dashboard)
+            repo_path="https://github.com/gardener/dashboard.git"
+            module_name="dashboard"
+            ;;
+        (*)
+            fail "Unknown module: $module"
+            ;;
+        esac
+
+        echo "Adding submodule $module from $repo_path ..."
+        git submodule add "$repo_path" "$module_name"
+        update=1
+    elif [[ $tag = "latest" ]] || [[ $tag != $(cat $repo/VERSION | grep "\S*") ]] ; then
+        update=1
+    fi
+
+    if [[ $update -gt 0 ]] ; then
+        echo "Updating $module to $tag ..."
+        pushd $repo 1> /dev/null
+        
+        # store local changes
+        git stash
+
+        if [[ $tag = "latest" ]] ; then
+            git checkout master
+            git pull --force --quiet
+        else
+            git fetch --tags --quiet
+            git checkout $tag
+        fi        
+
+        popd 1> /dev/null
+        echo "Module $module is now at version $tag."
+    else 
+        echo "Module $module is at the correct version, no update necessary."
+    fi
+
+    popd 1> /dev/null
+}

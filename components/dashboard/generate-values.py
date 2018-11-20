@@ -29,9 +29,9 @@ args=parser.parse_args()
 config=yaml.load(open(os.environ["LANDSCAPE_CONFIG"]))
 
 domain=config["clusters"]["dns"]["domain_name"]
-image_tag=utils.find_by_key_value(config["charts"], "name", "dashboard")["tag"]
 
 dashboard_config=utils.find_by_key_value(config["charts"], "name", "dashboard")
+image_tag=dashboard_config["tag"]
 
 values={
   "image": {
