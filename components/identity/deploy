@@ -22,6 +22,11 @@ function generate_random() {
 identity_config="$(read_landscape_config '.charts[] | select(.name=="identity")')"
 identity_repo_path="${DASHBOARD_REPO_PATH}"
 
+# Identity is partly integrated in dashboard, so the dashboard submodule is needed
+if [[ $(read_landscape_config '.charts[] | select(.name=="dashboard") | .managed') = "true" ]] ; then
+  manage_submodule dashboard
+fi
+
 # check passwords kubectlClientSecret, 
 # (generate if needed, do not overwrite)
 

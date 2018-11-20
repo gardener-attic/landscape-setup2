@@ -29,8 +29,7 @@ args=parser.parse_args()
 config=yaml.load(open(os.environ["LANDSCAPE_CONFIG"]))
 
 gardener_config=utils.find_by_key_value(config["charts"], "name", "gardener")
-
-image_tag=utils.find_by_key_value(config["charts"], "name", "gardener")["tag"]
+image_tag=gardener_config["tag"]
 
 values={
   "apiserver": {

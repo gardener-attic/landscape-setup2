@@ -43,7 +43,11 @@ etcd_server=$(read_landscape_config .etcd.server.${base})
 # render gardener helm chart values
 python generate-values.py --gardener-repo-path="$GARDENER_REPO_PATH" --etcd-server=$etcd_server > "$COMPONENT_STATE_HOME/values.yaml"
 
-gardener_config="$(read_landscape_config .charts[0])"
+gardener_config="$(read_landscape_config '.charts[] | select(.name=="gardener")')"
+
+if [[ $(jq -r ".managed" <<< "$gardener_config") = "true" ]] ; then
+  manage_submodule gardener
+fi
 
 # install or upgrade gardener
 helm upgrade --install \

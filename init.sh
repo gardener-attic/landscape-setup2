@@ -81,5 +81,7 @@ export -f fail
 export -f error
 export -f color
 export -f debug
+export -f read_landscape_config
+export -f manage_submodule
 
 echo "Environment variables configured!"

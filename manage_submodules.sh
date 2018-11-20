@@ -14,25 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dashboard_config="$(read_landscape_config '.charts[] | select(.name=="dashboard")')"
-dashboard_repo_path=${LANDSCAPE_HOME}/"dashboard"
-
-if [[ $(jq -r ".managed" <<< "$dashboard_config") = "true" ]] ; then
-  manage_submodule dashboard
-fi
-
-# render identity helm chart values
-python generate-values.py \
-  --dashboard-repo-path="$dashboard_repo_path" \
-  --tls-crt-path="$LANDSCAPE_STATE_HOME/cert/tls.crt" \
-  --tls-key-path="$LANDSCAPE_STATE_HOME/cert/tls.key" \
-  > "$COMPONENT_STATE_HOME/values.yaml"
-
-# install or upgrade identity
-helm upgrade --install \
-  --force \
-  --wait \
-  --values "$COMPONENT_STATE_HOME/values.yaml" \
-  --namespace garden \
-  dashboard \
-  "$dashboard_repo_path/$(jq -r '.path' <<< "$dashboard_config")"
+for mod in gardener dashboard ; do
+    echo "------------------------------"
+    echo "Managing submodule: $mod"
+    echo "------------------------------"
+    manage_submodule $mod
+    echo "------------------------------"
+done
