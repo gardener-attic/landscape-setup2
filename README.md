@@ -1,9 +1,45 @@
 # Gardener Setup Scripts
 
-This is the installation manual for a simple Gardener setup. It is part of the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
+This README is the installation manual for a simple Gardener setup. The installation scripts in this repo are embedded in a configuration template in the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
 
 We do recommend this simplified setup for demonstration purposes only. For productive workloads we do recommend that all components (Gardener/Seed/Shoot) run in their own IaaS accounts and that network policies are enabled and properly tested on the seed clusters. A documentation on how to do this is currently work in progress.
 
+<!-- TOC -->
+
+- [Gardener Setup Scripts](#gardener-setup-scripts)
+- [Prerequisites](#prerequisites)
+- [Gardener Installation](#gardener-installation)
+  - [TL;DR](#tldr)
+    - [Kubectl Aliases](#kubectl-aliases)
+  - [Step 1: Clone the Repositories and get Dependencies](#step-1-clone-the-repositories-and-get-dependencies)
+    - [Submodule Management](#submodule-management)
+  - [Step 2: Configure the Landscape](#step-2-configure-the-landscape)
+      - [Building the 'landscape.yaml' File](#building-the-landscapeyaml-file)
+      - [The Base Cluster](#the-base-cluster)
+        - [Kubify](#kubify)
+        - [Shoot Cluster](#shoot-cluster)
+        - [Using an Arbitrary Base Cluster](#using-an-arbitrary-base-cluster)
+  - [Step 3: Build and Run Docker Container](#step-3-build-and-run-docker-container)
+  - [Step 4-10: Deploying Components](#step-4-10-deploying-components)
+      - [Undeploying Components](#undeploying-components)
+      - [The 'all' Component](#the-all-component)
+  - [Step 4-10: Deploying Components (detailed)](#step-4-10-deploying-components-detailed)
+    - [Step 4: Kubify / etcd](#step-4-kubify--etcd)
+    - [Step 5: Generate Certificates](#step-5-generate-certificates)
+    - [Step 6: Deploy tiller](#step-6-deploy-tiller)
+    - [Step 7: Deploy Gardener](#step-7-deploy-gardener)
+    - [Step 8: Register Garden Cluster as Seed Cluster](#step-8-register-garden-cluster-as-seed-cluster)
+      - [Configuring Additional Seeds](#configuring-additional-seeds)
+      - [Creating a Shoot](#creating-a-shoot)
+    - [Step 9: Install Identity and Dashboard](#step-9-install-identity-and-dashboard)
+      - [Create CNAME Entry](#create-cname-entry)
+    - [Step 10: Apply Valid Certificates](#step-10-apply-valid-certificates)
+    - [Letsencrypt Quota Limits](#letsencrypt-quota-limits)
+      - [Accessing the Dashboard](#accessing-the-dashboard)
+- [Tearing Down the Landscape](#tearing-down-the-landscape)
+- [Cleanup](#cleanup)
+
+<!-- /TOC -->
 
 # Prerequisites
 
@@ -11,7 +47,6 @@ Before getting started make sure you have the following at hand:
 
 * You need a cloud account with sufficient quota to set up a Kubernetes cluster with a couple of VMs. **The Gardener supports AWS, Azure, GCP, and Openstack, but this simplified setup currently only supports AWS and Openstack.**
 * A Linux machine (virtual machine is fine) or a Mac with basic tools such as a git client and the Docker runtime installed.
-
 
 # Gardener Installation
 
@@ -21,12 +56,12 @@ Follow these steps to install Gardener. Do not proceed to the next step in case 
 ## TL;DR
 If you are already familiar with the installation procedure and just want a short summary of the commands you have to use, here it is:
 
-```
+```bash
 # setup
 git clone  --recursive https://github.com/gardener/landscape-setup-template.git landscape
+# fill in landscape/landscape_config.yaml now
 cd landscape/setup
 ./docker_run.sh
-./manage_submodules.sh
 deploy all
 
 # -------------------------------------------------------------------
@@ -35,6 +70,8 @@ deploy all
 undeploy all
 ./cleanup.sh
 ```
+
+Otherwise, follow the detailed guide below.
 
 ### Kubectl Aliases
 
@@ -53,7 +90,7 @@ Bash completion works for all of them except for `ka`.
 
 Get the `landscape-setup-template` from GitHub and initialize the submodules:
 
-```
+```bash
 git clone  --recursive https://github.com/gardener/landscape-setup-template.git landscape
 cd landscape
 ```
@@ -66,7 +103,7 @@ This project needs the [Gardener](https://github.com/gardener/gardener) and [das
 
 To check vor the correct version, the `VERSION` file in the submodule's main folder is read and compared to the tag in the config file. If the `VERSION` file doesn't exist, the component is added as a submodule. If it exists, but the versions differ, the fitting version will be checked out. If it exists and the versions are identical, nothing is done. The automatic version management will fail if a) the component is already added as a submodule, but the `VERSION` file is missing or b) the landscape folder is not a git repo. 
 
-It is also possible to trigger the version update manually: call the `manage_submodule` function with `gardener` or `dashboard` as an argument, or call the `manage_submodules.sh` script which will update Gardener and dashboard. Both will only work from inside the docker container / with sourced `init.sh` file.
+It is also possible to trigger the version update manually: call the `manage_submodule` function with `gardener` or `dashboard` as an argument, or run the `manage_submodules.sh` script which will update Gardener and dashboard. Both will only work from inside the docker container / with sourced `init.sh` file.
 
 ## Step 2: Configure the Landscape
 
@@ -76,7 +113,7 @@ There is a `landscape_config.yaml` file in the landscape project. This is the on
 
 Both config files - `landscape_config.yaml` and `landscape_base.yaml` - are merged into one `landscape.yaml` file which is then used as configuration for the scripts. Sourcing the `init.sh` file (which happens automatically when entering the docker image) will perform this merge **unless the file already exists.** This means if you change something in one of the original config files after the `landscape.yaml` file has already been created, you need to manually rebuild it in order for the changes to take effect. 
 
-```
+```bash
 ./build_landscape_yaml.sh
 ```
 
@@ -91,7 +128,7 @@ You can use [Kubify](https://github.com/gardener/kubify) to create the initial c
 
 ##### Shoot Cluster
 A shoot cluster is a cluster created by a Gardener instance and it can be used as a base cluster for this project. These flags have to be set for the kube-apiserver (if not set, the Gardener will still work, but the dashboard won't):
-```
+```yaml
 --oidc-issuer-url=https://identity.ingress.<your cluster domain>
 --oidc-client-id=kube-kubectl
 --oidc-username-claim=email
@@ -115,7 +152,7 @@ First, `cd` into the folder containing this project.
 
 Then run the container:
 
-```
+```bash
 ./docker_run.sh
 ```
 
@@ -136,7 +173,7 @@ If pulling the image doesn't work for whatever reason, you can use the `docker_b
 
 The Gardener deployment is splitted into components. A single component can be easily deployed using 
 
-```
+```bash
 deploy <component name>
 ```
 
@@ -147,7 +184,7 @@ The `deploy` command is added to the `PATH` environment variable and can thus be
 #### Undeploying Components
 It is also possible to "undeploy" a component using 
 
-```
+```bash
 undeploy <component name>
 ```
 
@@ -162,7 +199,7 @@ It is also possible to drop one part of the range or to drop the whole argument.
 
 The `undeploy` command can also be used with the `all` component, but take care that the component order is inverted. 
 
-```
+```bash
 # Examples
 # (start and end component are always inclusive)
 deploy all                          # deploys all components
@@ -182,7 +219,7 @@ undeploy all dashboard:cert         # undeploys 'dashboard' through 'cert'
 
 If you want to create a Kubify cluster, deploy the component:
 
-```
+```bash
 deploy kubify
 ```
 
@@ -205,7 +242,7 @@ kube-system     kube-apiserver-hcdnc                                            
 
 If you already have a cluster, you don't need Kubify. To deploy an etcd in your cluster, run 
 
-```
+```bash
 deploy etcd
 ```
 
@@ -217,7 +254,7 @@ It should also be possible to plug in your own etcd - check the deploy scripts f
 
 This step will generate a self-signed cluster CA and sign some certificates with it.
 
-```
+```bash
 deploy cert
 ```
 
@@ -225,7 +262,7 @@ deploy cert
 
 Tiller is needed to deploy the Helm charts of Gardener and other components.
 
-```
+```bash
 deploy helm-tiller
 ```
 
@@ -233,7 +270,7 @@ deploy helm-tiller
 
 Now we can deploy Gardener. If the previous steps were executed successfully this should be completed in a couple of seconds.
 
-```
+```bash
 deploy gardener
 ```
 
@@ -264,7 +301,7 @@ gardener-controller-manager-5c9f8db55-hfcts   1/1       Running   0          6m
 
 In heterogeneous productive environments one would run Gardener and seed in separate clusters but for simplicity and resource consumption reasons we will register the Gardener cluster that we have just created also as the seed cluster. Make sure that the `seed_config` in the landscape file is correct and matches the region that you are using. Keep in mind that image ids differ between regions as well. Also, valid credentials for the seed provider have to be specified in the `authentication` part of the `landscape_config.yaml` file (the etcd backups of the shoot clusters are stored on the seed). 
 
-```
+```bash
 deploy seed-config
 ```
 
@@ -285,7 +322,7 @@ Valid values for seeds are `aws`, `az` (for Azure), `gcp`, and `openstack`. Plea
 That's it! If everything went fine you should now be able to create shoot clusters.
 You can start with a sample [manifest](https://github.com/gardener/gardener/blob/master/example/90-shoot-aws.yaml) and create a shoot cluster by standard Kubernetes means:
 
-```
+```bash
 kubectl apply -f shoot-aws.yaml
 ```
 
@@ -293,7 +330,7 @@ kubectl apply -f shoot-aws.yaml
 
 Creating clusters based on a shoot manifest is quite nice but also a little complex. While almost all aspects of a shoot cluster can be configured, it can be quite difficult for beginners, so go on and install the dashboard:
 
-```
+```bash
 deploy identity
 [...]
 deploy dashboard
@@ -304,7 +341,7 @@ deploy dashboard
 
 Dashboard and identity need a CNAME entry pointing the domain `*.ingress.<your cluster domain>` to your cluster's nginx ingress ip/hostname. Kubify creates this entry automatically. If you are not using kubify to create your base cluster, you can create the CNAME entry with the corresponding component: 
 
-```
+```bash
 deploy cname
 ```
 
@@ -314,7 +351,7 @@ The script uses the AWS CLI to create the entry, so it will only work for route5
 
 The following command will install the [cert-manager](https://github.com/jetstack/cert-manager) and request valid letsencrypt certificates for both the identity and dashboard ingresses:
 
-```
+```bash
 deploy certmanager
 ```
 
@@ -350,7 +387,7 @@ No resources found.
 ```
 
 If you created your base cluster with the Kubify component, you can destroy it using the undeploy command:
-```
+```bash
 undeploy kubify
 ```
 
@@ -361,7 +398,7 @@ After destroying the Kubify cluster, there will be some files left that prevent 
 **ATTENTION: Only do this if you are sure the cluster has been completely destroyed!**
 Since this removes the terraform state, an automated deletion of resources won't be possible anymore - you will have to clean up any leftovers manually.
 
-```
+```bash
 ./cleanup.sh
 ```
 
