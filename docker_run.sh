@@ -29,6 +29,6 @@ fi
 
 # Run the docker container with interactive shell, cd to the mounted folder, and source the init.sh file
 # the "&& bash" keeps the interactive mode of the docker container alive
-docker run -it -v $(pwd)/..:/landscape -w /landscape/setup "$IMAGE_NAME:$CURRENT_IMAGE_VERSION" bash -c "source /landscape/setup/init.sh && bash"
+docker run -it -v $(pwd)/..:/landscape -w /landscape/setup "$IMAGE_NAME:$CURRENT_IMAGE_VERSION" bash -c "echo 'source /landscape/setup/init.sh' >> ~/.bashrc && bash"
 
 popd 1> /dev/null

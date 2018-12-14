@@ -14,6 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-  kubectl -n kube-system get serviceaccount tiller || kubectl -n kube-system create serviceaccount tiller
-  kubectl get clusterrolebinding tiller || kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-  helm init --upgrade --wait --service-account tiller
+force=
+if [ $# -gt 1 ] && [ $2 == "-y" ] ; then
+  force="-force"
+fi
+
+$KUBIFY_REPO_PATH/bin/tf destroy $force
+
+rm -rf $LANDSCAPE_STATE_HOME/etcd/etcd-ca.pem $LANDSCAPE_STATE_HOME/etcd/etcd-client.pem $LANDSCAPE_STATE_HOME/etcd/etcd-client-key.pem
+rmdir $LANDSCAPE_STATE_HOME/etcd &> /dev/null || true # will delete the etcd state folder if it's empty

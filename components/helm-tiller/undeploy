@@ -14,6 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-echo "Removing sessionAffinity from kubernetes service ..."
-kubectl patch svc kubernetes --type json -p='[{"op": "remove", "path": "/spec/sessionAffinity"}]'
-kubectl get svc kubernetes -o yaml
+kubectl -n kube-system delete deployment tiller-deploy --ignore-not-found
+kubectl delete clusterrolebinding tiller --ignore-not-found
+kubectl -n kube-system delete serviceaccount tiller --ignore-not-found
+kubectl -n kube-system delete service tiller-deploy --ignore-not-found

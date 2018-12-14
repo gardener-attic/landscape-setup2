@@ -14,6 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-  kubectl -n kube-system get serviceaccount tiller || kubectl -n kube-system create serviceaccount tiller
-  kubectl get clusterrolebinding tiller || kubectl create clusterrolebinding tiller --clusterrole cluster-admin --serviceaccount=kube-system:tiller
-  helm init --upgrade --wait --service-account tiller
+# remove aws cli configuration, so the credentials are not saved
+aws configure set aws_access_key_id "DELETED" --profile "$AWS_CLI_PROFILE"
+aws configure set aws_secret_access_key "DELETED" --profile "$AWS_CLI_PROFILE"

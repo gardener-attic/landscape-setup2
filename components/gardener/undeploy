@@ -1,0 +1,33 @@
+#!/bin/bash -eu
+#
+# Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+echo "Deleting remaining shoots, if any ..."
+$SETUP_REPO_PATH/delete_all.sh shoots 2> /dev/null || true
+if [ $(kubectl get shoots --all-namespaces 2> /dev/null | wc -l) -gt 0 ] ; then
+    fail "It seems there are still shoots left! Undeploy has been stopped."
+fi 
+echo "Deleting remaining projects, if any ..."
+$SETUP_REPO_PATH/delete_all.sh projects 2> /dev/null || true
+
+# helm will also delete the validatingwebhookconfiguration, but sometimes not fast enough, therefore the manual call that waits until it is deleted
+kubectl delete validatingwebhookconfiguration validate-namespace-deletion --ignore-not-found 
+
+releases=$(helm list gardener --output=json | jq ".Releases | length")
+if [ ${releases:-0} -ge 1 ]; then
+  helm delete --purge gardener
+fi
+kubectl delete namespace garden --ignore-not-found
+rm -rf ~/.kube # clear kubectl cache to prevent error on next call

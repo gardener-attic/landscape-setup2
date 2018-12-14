@@ -1,0 +1,80 @@
+#!/bin/bash -eu
+#
+# Copyright (c) 2018 SAP SE or an SAP affiliate company. All rights reserved. This file is licensed under the Apache Software License, v. 2 except as noted otherwise in the LICENSE file
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# preparation
+etcd_namespace=$(read_landscape_config .etcd.namespace)
+python $COMPONENT_TEMPLATE_HOME/generate-values.py --etcd-namespace=$etcd_namespace > $COMPONENT_STATE_HOME/etcd-ca-csr.json
+cp $COMPONENT_TEMPLATE_HOME/etcd-gencert-config.json $COMPONENT_STATE_HOME/etcd-gencert-config.json
+
+# generate certificates
+# - CA
+if [[ ! -f "$COMPONENT_STATE_HOME/etcd-ca.pem" ]]; then
+  cfssl gencert --initca=true $COMPONENT_STATE_HOME/etcd-ca-csr.json | cfssljson --bare $COMPONENT_STATE_HOME/etcd-ca
+
+  # deleted certs so they are recreated when the CA has been renewed
+  rm -rf ${COMPONENT_STATE_HOME}/etcd-server.pem ${COMPONENT_STATE_HOME}/etcd-server-key.pem ${COMPONENT_STATE_HOME}/etcd-server.csr
+  rm -rf ${COMPONENT_STATE_HOME}/etcd-client.pem ${COMPONENT_STATE_HOME}/etcd-client-key.pem ${COMPONENT_STATE_HOME}/etcd-client.csr
+fi
+
+# - server
+if [[ ! -f "$COMPONENT_STATE_HOME/etcd-server.pem" ]]; then
+  cfssl gencert --ca $COMPONENT_STATE_HOME/etcd-ca.pem \
+    --ca-key $COMPONENT_STATE_HOME/etcd-ca-key.pem \
+    --config $COMPONENT_STATE_HOME/etcd-gencert-config.json \
+    $COMPONENT_STATE_HOME/etcd-ca-csr.json \
+    | cfssljson --bare $COMPONENT_STATE_HOME/etcd-server
+fi
+
+# - client
+if [[ ! -f "$COMPONENT_STATE_HOME/etcd-client.pem" ]]; then
+  cfssl gencert \
+    --ca $COMPONENT_STATE_HOME/etcd-ca.pem \
+    --ca-key $COMPONENT_STATE_HOME/etcd-ca-key.pem \
+    --config $COMPONENT_STATE_HOME/etcd-gencert-config.json \
+    $COMPONENT_STATE_HOME/etcd-ca-csr.json \
+    | cfssljson --bare $COMPONENT_STATE_HOME/etcd-client
+fi
+
+# check if namespace exists
+ns=$(kubectl get ns $etcd_namespace --no-headers --output=go-template={{.metadata.name}} 2>/dev/null) || true
+if [ -z "$ns" ] ; then # ns is empty => namespace doesn't exist
+  kubectl create ns $etcd_namespace
+  echo -n "$etcd_namespace" > $COMPONENT_STATE_HOME/created_namespace # save namespace so it can be deleted later
+fi
+
+# create secrets
+mako-render $COMPONENT_TEMPLATE_HOME/etcd-secrets.yaml.tmpl --var namespace=$etcd_namespace > $COMPONENT_STATE_HOME/etcd-secrets.yaml
+kubectl apply -f $COMPONENT_STATE_HOME/etcd-secrets.yaml
+
+# deploy etcd
+mako-render $COMPONENT_TEMPLATE_HOME/etcd-manifest.yaml.tmpl --var namespace=$etcd_namespace > $COMPONENT_STATE_HOME/etcd-manifest.yaml
+kubectl apply -f $COMPONENT_STATE_HOME/etcd-manifest.yaml
+
+# wait until etcd ready
+max_retry_time=300
+retry_stop=$(($(date +%s) + max_retry_time))
+success=false
+while [[ $(date +%s) -lt $retry_stop ]]; do
+  sleep 5
+  if [[ $(kubectl -n $etcd_namespace get pod etcd-0 -o jsonpath={.status.phase} 2> /dev/null) = "Running" ]] ; then
+    success=true
+    break;
+  fi
+  debug "Waiting for etcd pod to become running ..."
+done
+if ! $success; then
+  fail "The etcd pod did not become running within $max_retry_time seconds!"
+fi

@@ -14,13 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
-
-./deploy.sh kubify
-
-echo "Cluster successfully set up!"
-
-echo ""
-$SETUP_REPO_PATH/session_affinity_fix.sh
-
-popd 1> /dev/null
+for mod in gardener dashboard ; do
+    echo "------------------------------"
+    echo "Managing submodule: $mod"
+    echo "------------------------------"
+    manage_submodule $mod
+    echo "------------------------------"
+done

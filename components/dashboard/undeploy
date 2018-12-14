@@ -14,20 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# source common environment and functions
-source "$(dirname "$0")/common"
-
-# determine active cluster (in case we have blue/green gardens and soils)
-active_cluster_repo_path="$(determine_active_cluster_repo_path)"
-kubeconfig_path="$active_cluster_repo_path/gen/assets/auth/kubeconfig"
-
-# check prerequisites
-[[ ! -f "$kubeconfig_path" ]] && fail "Active Garden cluster's kubeconfig not found!"
-
-# call helm
-KUBECONFIG="$kubeconfig_path" \
-HELM_HOME="$LANDSCAPE_HOME/.helm" \
-"$(lookup_command helm)" "$@"
-
-# add group write permissions on all helm artifacts
-chmod g+w -R "$LANDSCAPE_HOME/.helm" || true
+releases=$(helm list dashboard --output=json | jq ".Releases | length")
+if [ ${releases:-0} -ge 1 ]; then
+  helm delete --purge dashboard
+fi

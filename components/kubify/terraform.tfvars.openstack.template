@@ -1,8 +1,7 @@
-<%page args="config, profileName, utils" />
+<%page args="config" />
 <%
 authentication=config["authentication"]["variant_openstack"]
 dns=config["clusters"]["dns"]
-addons=utils.dict_to_tfvars(config["addons"]["variant_all"])
 misc=config["misc"]["variant_all"].copy()
 misc.update(config["misc"]["variant_openstack"])
 %>
@@ -23,51 +22,6 @@ os_fip_pool_name = "${misc["os_fip_pool_name"]}"
 os_lbaas_provider = "${misc["os_lbaas_provider"]}"
 os_az = "${authentication["os_az"]}"
 
-cluster_name = "${config["clusters"]["name"]}"
-
-cluster_type = "${config["clusters"]["type"]}"
-
-# DNS
-dns = {
-  domain_name = "${dns["domain_name"]}"
-  dns_type = "${dns["dns_type"]}"
-  hosted_zone_id = "${dns["hosted_zone_id"]}"
-  % if "access_key" in dns and dns["access_key"]:
-  access_key = "${dns["access_key"]}"
-  secret_key = "${dns["secret_key"]}"
-  % endif
-}
-
-versions = {
-  kubernetes_version = "${config["versions"]["variant_all"]["kubernetes_version"]}"
-  image_name = "${config["versions"]["variant_openstack"]["image_name"]}"
-}
-
-# cluster size
-master = {
-  count = ${config["clusters"]["master"]["count"]}
-  volume_size = ${config["clusters"]["master"]["volume_size"]}
-}
-
-worker = {
-  count = ${config["clusters"]["worker"]["count"]}
-  volume_size = ${config["clusters"]["worker"]["volume_size"]}
-}
-
-etcd_backup = ${utils.dict_to_tfvars(config["etcd_backup"])}
-
-addons = ${addons}
-
-dashboard_creds = "${misc["dashboard_creds"]}"
-deploy_tiller = ${misc["deploy_tiller"]}
 event_ttl = "${misc["event_ttl"]}"
 
-oidc_issuer_subdomain = "${misc["oidc_issuer_subdomain"]}"
-oidc_client_id = "${misc["oidc_client_id"]}"
-oidc_username_claim = "${misc["oidc_username_claim"]}"
-oidc_groups_claim = "${misc["oidc_groups_claim"]}"
-oidc_use_cluster_ca = true
-subnet_cidr = "${misc["subnet_cidr"]}"
-service_cidr = "${misc["service_cidr"]}"
-pod_cidr = "${misc["pod_cidr"]}"
 os_vpc_cidr = "${misc["vpc_cidr"]}"

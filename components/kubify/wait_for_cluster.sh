@@ -65,10 +65,8 @@ while [[ $(date +%s) -lt $retry_stop ]]; do
     debug "Amount of ingress pods ($ingress_count) doesn't equal specified amount of worker nodes ($worker_count) yet. Waiting ..."
     ;;
   (0) # check: #pods == #running pods
-    pod_count=$(kubectl get pods --all-namespaces | wc -l) &> /dev/null
-    ((pod_count=$pod_count-1))  || true # substract headline
-    running_pod_count=$(kubectl get pods --field-selector=status.phase=Running --all-namespaces | wc -l) &> /dev/null
-    ((running_pod_count=$running_pod_count-1))  || true # substract headline
+    pod_count=$(kubectl get pods --all-namespaces --no-headers | wc -l) &> /dev/null
+    running_pod_count=$(kubectl get pods --field-selector=status.phase=Running --all-namespaces --no-headers | wc -l) &> /dev/null
     if [ $pod_count -gt 0 ] && [ $pod_count -eq $running_pod_count ]; then
       echo "Cluster is up and all pods are running!"      
       success=true

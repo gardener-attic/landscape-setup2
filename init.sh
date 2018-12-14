@@ -28,6 +28,10 @@ export SETUP_REPO_PATH=${LANDSCAPE_HOME}/setup
 
 export KUBIFY_STATE_PATH=${LANDSCAPE_HOME}
 
+export KUBECONFIG=$KUBIFY_STATE_PATH/kubeconfig
+
+export HELM_HOME="$LANDSCAPE_HOME/.helm"
+
 export LANDSCAPE_SCRIPTS_HOME="${SETUP_REPO_PATH}/bin"
 
 export LANDSCAPE_CONFIG="$LANDSCAPE_HOME/landscape.yaml"
@@ -64,10 +68,20 @@ fi
 
 source ${SETUP_REPO_PATH}/bin/common
 
+# autocompletion for deploy/undeploy
+complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" deploy
+complete -W "$(ls $LANDSCAPE_COMPONENTS_HOME | xargs)" undeploy
+
+# component order for the all deploy/undeploy script
+export COMPONENT_ORDER_KUBIFY="kubify,cert,helm-tiller,gardener,seed-config,identity,dashboard,certmanager"
+export COMPONENT_ORDER_CUSTOM="etcd,cert,helm-tiller,gardener,seed-config,identity,dashboard,cname,certmanager"
+
 # export fail function and dependencies to be available in scripts
 export -f fail
 export -f error
 export -f color
 export -f debug
+export -f read_landscape_config
+export -f manage_submodule
 
 echo "Environment variables configured!"

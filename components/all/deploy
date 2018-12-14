@@ -19,48 +19,40 @@
 # It deploys certificates, helm-tiller, gardener, sets the garden clusters as seed cluster, and installs identity and the gardener dashboard
 # Prerequesites: kubify cluster
 
-echo "Setting up the cluster ..."
+base=$(read_landscape_config ".clusters.base_cluster" | tr "[:lower:]" "[:upper:]")
+order_variable="COMPONENT_ORDER_${base}"
 
-pushd "$LANDSCAPE_COMPONENTS_HOME" 1> /dev/null
-
-if [ $# -gt 0 ]; then 
-    arg="$1"
+if [ $# -gt 1 ]; then 
+    parse_args_list ":" comps $2
 else 
-    arg=cert
+    comps=
 fi
-case $arg in
-    (cert) 
-        # certificates
-        ./deploy.sh cert
-        ;&
-    (helm-tiller) 
-        # helm-tiller
-        ./deploy.sh helm-tiller
-        ;&
-    (gardener) 
-        # gardener
-        ./deploy.sh gardener
-        ;&
-    (seed-config)
-        # register garden cluster as seed cluster
-        ./deploy.sh seed-config
-        ;&
-    (identity)
-        # identity
-        ./deploy.sh identity
-        ;&
-    (dashboard)
-        # dashboard 
-        ./deploy.sh dashboard
-        ;;
-    (*)
-        # something else
-        fail "Unknown argument: $arg"
-        ;;
-esac
 
-popd 1> /dev/null
+parse_args_list "," order "${!order_variable}"
 
-echo "Gardener successfully deployed!"
+start_comp="${comps[0]:-${order[0]}}"
+end_comp="${comps[1]:-${order[-1]}}"
+started=
+
+echo "Deploying components '${start_comp}' to '${end_comp}' ..."
+
+for comp in ${order[@]} ; do
+    if [ $comp = $start_comp ] ; then
+        started="yes"
+    fi
+
+    if [[ -n $started ]] ; then
+        if [[ $start_comp = "kubify" ]] && [[ $comp = "etcd" ]] ; then
+            : # special case: if deploying with kubify, skip etcd
+        else
+            deploy "$comp"
+        fi
+    fi 
+
+    if [ $comp = $end_comp ] ; then
+        break
+    fi
+done
+
 echo ""
-$SETUP_REPO_PATH/print_dashboard_urls.sh
+echo "Finished deploying components '${start_comp}' to '${end_comp}'."

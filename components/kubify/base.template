@@ -6,5 +6,60 @@ import utils
 
 config=yaml.load(open(os.environ['LANDSCAPE_CONFIG']))
 profileName=config["cloud"]["variant"]
+currentVariant="variant_{}".format(profileName)
+dns=config["clusters"]["dns"]
+addons=utils.dict_to_tfvars(config["addons"]["variant_all"])
+misc=config["misc"]["variant_all"].copy()
+if currentVariant in config["misc"] and config["misc"][currentVariant] is not None:
+  misc.update(config["misc"][currentVariant])
 %>
-<%include file="terraform.tfvars.${profileName}.template" args="config=config, profileName=profileName, utils=utils" />
+<%include file="terraform.tfvars.${profileName}.template" args="config=config" />
+
+cluster_name = "${config["clusters"]["name"]}"
+
+cluster_type = "${config["clusters"]["type"]}"
+
+versions = {
+  % if "etcd_version" in config["versions"][currentVariant] and config["versions"][currentVariant]["etcd_version"]:
+  etcd_version = "${config["versions"][currentVariant]["etcd_version"]}"
+  % endif
+  image_name = "${config["versions"][currentVariant]["image_name"]}"
+}
+
+# DNS
+dns = {
+  domain_name = "${dns["domain_name"]}"
+  dns_type = "${dns["dns_type"]}"
+  hosted_zone_id = "${dns["hosted_zone_id"]}"
+  % if "access_key" in dns and dns["access_key"]:
+  access_key = "${dns["access_key"]}"
+  secret_key = "${dns["secret_key"]}"
+  % endif
+}
+
+# cluster size
+master = {
+  count = ${config["clusters"]["master"]["count"]}
+  volume_size = ${config["clusters"]["master"]["volume_size"]}
+}
+
+worker = {
+  count = ${config["clusters"]["worker"]["count"]}
+  volume_size = ${config["clusters"]["worker"]["volume_size"]}
+}
+
+etcd_backup = ${utils.dict_to_tfvars(config["etcd_backup"])}
+
+addons = ${addons}
+
+dashboard_creds = "${misc["dashboard_creds"]}"
+deploy_tiller = ${misc["deploy_tiller"]}
+oidc_issuer_subdomain = "${misc["oidc_issuer_subdomain"]}"
+oidc_client_id = "${misc["oidc_client_id"]}"
+oidc_username_claim = "${misc["oidc_username_claim"]}"
+oidc_groups_claim = "${misc["oidc_groups_claim"]}"
+subnet_cidr = "${misc["subnet_cidr"]}"
+service_cidr = "${misc["service_cidr"]}"
+pod_cidr = "${misc["pod_cidr"]}"
+
+selfhosted_etcd = "false"
