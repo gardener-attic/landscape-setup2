@@ -108,11 +108,11 @@ spec:
         - ${a}
         % endfor
     keystoneURL: ${config["authentication"]["variant_openstack"]["os_auth_url"]}
-% elif seed == "az":
+% elif seed == "azure":
 apiVersion: garden.sapcloud.io/v1beta1
 kind: CloudProfile
 metadata:
-  name: az
+  name: azure
 spec:
   azure:
     constraints:
