@@ -20,10 +20,14 @@ cluster_name = "${config["clusters"]["name"]}"
 cluster_type = "${config["clusters"]["type"]}"
 
 versions = {
-  % if "etcd_version" in config["versions"][currentVariant] and config["versions"][currentVariant]["etcd_version"]:
+  % if config["versions"][currentVariant]:
+    % if "etcd_version" in config["versions"][currentVariant] and config["versions"][currentVariant]["etcd_version"]:
   etcd_version = "${config["versions"][currentVariant]["etcd_version"]}"
-  % endif
+    % endif
+    % if "image_name" in config["versions"][currentVariant] and config["versions"][currentVariant]["image_name"]:
   image_name = "${config["versions"][currentVariant]["image_name"]}"
+    % endif
+  % endif
 }
 
 # DNS

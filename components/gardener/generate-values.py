@@ -32,53 +32,55 @@ gardener_config=utils.find_by_key_value(config["charts"], "name", "gardener")
 image_tag=gardener_config["tag"]
 
 values={
-  "apiserver": {
-    "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "cert", "ca.crt")),
-    "image": {
-      "tag": image_tag
-    },
-    "tls": {
-      "crt": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-apiserver-tls.pem")),
-      "key": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-apiserver-tls-key.pem")),
-    },
-    "etcd": {
-      "servers": args.etcd_server,
-      "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-ca.pem")),
-      "tls": {
-        "crt": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-client.pem")),
-        "key": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-client-key.pem"))
+  "global": {
+    "apiserver": {
+      "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "cert", "ca.crt")),
+      "image": {
+        "tag": image_tag
       },
-    }
-  },
-  "controller": {
-    "image": {
-      "tag": image_tag
-    },
-    "internalDomain": {
-      "provider": gardener_config["values"]["controller"]["internalDomain"]["provider"],
-      "domain": gardener_config["values"]["controller"]["internalDomain"]["domain"],
-      "hostedZoneID": gardener_config["values"]["controller"]["internalDomain"]["hostedZoneID"],
-      "credentials": {
-        "accessKeyID": gardener_config["values"]["controller"]["internalDomain"]["access_key"],
-        "secretAccessKey": gardener_config["values"]["controller"]["internalDomain"]["secret_key"]
+      "tls": {
+        "crt": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-apiserver-tls.pem")),
+        "key": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-apiserver-tls-key.pem")),
+      },
+      "etcd": {
+        "servers": args.etcd_server,
+        "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-ca.pem")),
+        "tls": {
+          "crt": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-client.pem")),
+          "key": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "etcd", "etcd-client-key.pem"))
+        },
       }
     },
-    "defaultDomains": [],
-    "gitHub": [],
-    "openVPNDiffieHellmanKey": gardener_config["openVPNDiffieHellmanKey"],
-#    "alertingSMTP": gardener_config["values"]["controller"]["alertingSMTP"],
-    "config": {
-      "controllers": {
-        "seed": {
-          "reserveExcessCapacity": False,
+    "controller": {
+      "image": {
+        "tag": image_tag
+      },
+      "internalDomain": {
+        "provider": gardener_config["values"]["controller"]["internalDomain"]["provider"],
+        "domain": gardener_config["values"]["controller"]["internalDomain"]["domain"],
+        "hostedZoneID": gardener_config["values"]["controller"]["internalDomain"]["hostedZoneID"],
+        "credentials": {
+          "accessKeyID": gardener_config["values"]["controller"]["internalDomain"]["access_key"],
+          "secretAccessKey": gardener_config["values"]["controller"]["internalDomain"]["secret_key"]
         }
       },
-      "server": {
-        "https": {
-          "tls": {
-            "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "cert", "ca.crt")),
-            "crt": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls.pem")),
-            "key": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls-key.pem"))
+      "defaultDomains": [],
+      "gitHub": [],
+      "openVPNDiffieHellmanKey": gardener_config["openVPNDiffieHellmanKey"],
+  #    "alertingSMTP": gardener_config["values"]["controller"]["alertingSMTP"],
+      "config": {
+        "controllers": {
+          "seed": {
+            "reserveExcessCapacity": False,
+          }
+        },
+        "server": {
+          "https": {
+            "tls": {
+              "caBundle": utils.read_file(os.path.join(os.environ["LANDSCAPE_STATE_HOME"], "cert", "ca.crt")),
+              "crt": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls.pem")),
+              "key": utils.read_file(os.path.join(os.environ["COMPONENT_STATE_HOME"], "tls", "gardener-controller-manager-tls-key.pem"))
+            }
           }
         }
       }
@@ -87,7 +89,7 @@ values={
 }
 
 for domain in gardener_config["values"]["controller"]["defaultDomains"]:
-  values["controller"]["defaultDomains"].append({
+  values["global"]["controller"]["defaultDomains"].append({
     "provider": domain["provider"],
     "domain": domain["domain"],
     "hostedZoneID": domain["hostedZoneID"],
