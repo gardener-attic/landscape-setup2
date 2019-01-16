@@ -27,7 +27,7 @@ RUN apt-get update && apt-get install -y jq gnupg2 python python-mako curl groff
     python setup.py --without-libyaml install && \
     cd .. && rm -rf pyyaml && \
     pip install awscli --ignore-installed pyyaml && \
-    curl -O https://kubernetes-helm.storage.googleapis.com/helm-v2.10.0-linux-amd64.tar.gz && \
+    curl -O https://kubernetes-helm.storage.googleapis.com/helm-v2.12.1-linux-amd64.tar.gz && \
     tar xfv helm-*linux-amd64.tar.gz && mv linux-amd64/helm /usr/local/bin && rm -rf linux-amd64 && \
     curl -LO https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.8/spiff_linux_amd64.zip && \
     unzip spiff_linux_amd64.zip && mv spiff /usr/local/bin && rm -rf spiff_linux_amd64.zip && \
