@@ -29,7 +29,7 @@ for i in $(seq 0 $((len - 1))); do # go from 0 to len-1
     namespace=$(echo "$resources" | jq -r ".items[$i].metadata.namespace")
 
     echo -n "Deleting '$name' "
-    if [[ $namespace ]] ; then
+    if [[ $namespace ]] && [[ $namespace != "null" ]]; then
         echo -n "in namespace '$namespace' "
     fi
     echo "..."
