@@ -1,3 +1,9 @@
+# ---DEPRECATED---
+
+**This project is outdated and won't be updated anymore. Please use https://github.com/gardener/garden-setup instead!**
+
+
+
 # Gardener Setup Scripts
 
 This README is the installation manual for a simple Gardener setup. The installation scripts in this repo are embedded in a configuration template in the [landscape-setup-template](https://github.com/gardener/landscape-setup-template) project. You can find further information there.
