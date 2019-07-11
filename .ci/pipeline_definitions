@@ -8,7 +8,7 @@ gardener-setup-release:
     repo:
       trigger: false
     steps: ~
-  variants:
+  jobs:
     minor-release-and-image:
       steps:
         update_image_version: 
