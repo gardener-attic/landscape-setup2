@@ -11,34 +11,34 @@ gardener-setup-release:
   jobs:
     minor-release-and-image:
       steps:
-        update_image_version: 
+        update_image_version:
           publish_to: ['source']
       traits:
         publish:
-            dockerimages:
-                gardener-setup:
-                    inputs:
-                        repos:
-                            source: ~
-                    registry: 'gcr-readwrite'
-                    image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
-                    tag_as_latest: true
+          dockerimages:
+            gardener-setup:
+              inputs:
+                repos:
+                  source: ~
+              registry: 'gcr-readwrite'
+              image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
+              tag_as_latest: true
         release:
           nextversion: 'bump_minor'
     patch-release-and-image:
       steps:
-        update_image_version: 
+        update_image_version:
           publish_to: ['source']
       traits:
         publish:
-            dockerimages:
-                gardener-setup:
-                    inputs:
-                        repos:
-                            source: ~
-                    registry: 'gcr-readwrite'
-                    image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
-                    tag_as_latest: true
+          dockerimages:
+            gardener-setup:
+              inputs:
+                repos:
+                  source: ~
+              registry: 'gcr-readwrite'
+              image: 'eu.gcr.io/gardener-project/gardener/gardener-setup'
+              tag_as_latest: true
         release:
           nextversion: 'bump_patch'
     minor-release:
