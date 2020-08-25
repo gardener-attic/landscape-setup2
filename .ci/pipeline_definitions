@@ -2,6 +2,7 @@ gardener-setup-release:
   template: 'default'
   base_definition:
     traits:
+      component_descriptor: ~
       version:
         preprocess:
           'finalize'
